@@ -4,6 +4,9 @@
 **Referenced Files in This Document**
 - [layout.tsx](file://smartview-portal/src/app/layout.tsx)
 - [page.tsx](file://smartview-portal/src/app/page.tsx)
+- [api.ts](file://smartview-portal/src/lib/api.ts)
+- [AuthContext.tsx](file://smartview-portal/src/contexts/AuthContext.tsx)
+- [login/page.tsx](file://smartview-portal/src/app/login/page.tsx)
 - [package.json](file://smartview-portal/package.json)
 - [next.config.mjs](file://smartview-portal/next.config.mjs)
 - [tailwind.config.ts](file://smartview-portal/tailwind.config.ts)
@@ -17,382 +20,432 @@
 - [about/page.tsx](file://smartview-portal/src/app/about/page.tsx)
 - [features/page.tsx](file://smartview-portal/src/app/features/page.tsx)
 - [pricing/page.tsx](file://smartview-portal/src/app/pricing/page.tsx)
+- [main.ts](file://smartview-server/src/main.ts)
+- [app.module.ts](file://smartview-server/src/app.module.ts)
+- [auth.controller.ts](file://smartview-server/src/auth/auth.controller.ts)
+- [response.interceptor.ts](file://smartview-server/src/common/interceptors/response.interceptor.ts)
+- [http-exception.filter.ts](file://smartview-server/src/common/filters/http-exception.filter.ts)
+- [schema.prisma](file://smartview-server/prisma/schema.prisma)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Added comprehensive microservices architecture documentation covering Next.js 14 frontend and NestJS backend
+- Documented API gateway pattern using Next.js rewrites for proxying requests
+- Added authentication flow with JWT tokens and token refresh mechanisms
+- Documented database schema with Prisma ORM and PostgreSQL
+- Added system boundaries and data flow patterns between frontend and backend services
+- Updated architectural diagrams to show microservices communication
 
 ## Table of Contents
 1. [Introduction](#introduction)
-2. [Project Structure](#project-structure)
-3. [Core Components](#core-components)
-4. [Architecture Overview](#architecture-overview)
-5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
+2. [Microservices Architecture Overview](#microservices-architecture-overview)
+3. [Frontend Layer - Next.js 14 App Router](#frontend-layer---nextjs-14-app-router)
+4. [Backend Layer - NestJS REST API](#backend-layer---nestjs-rest-api)
+5. [Database Layer - Prisma PostgreSQL](#database-layer---prisma-postgresql)
+6. [API Gateway and Communication Patterns](#api-gateway-and-communication-patterns)
+7. [Authentication and Authorization Flow](#authentication-and-authorization-flow)
+8. [Component Architecture](#component-architecture)
+9. [Data Flow Patterns](#data-flow-patterns)
+10. [System Boundaries and Integration Points](#system-boundaries-and-integration-points)
+11. [Performance and Scalability Considerations](#performance-and-scalability-considerations)
+12. [Troubleshooting Guide](#troubleshooting-guide)
+13. [Conclusion](#conclusion)
 
 ## Introduction
-This document describes the architecture of the SmartView Portal Next.js application. It focuses on the Next.js 14 App Router design, file-based routing, layered architecture (pages, components, utilities, configuration), and the design system built with Tailwind CSS, Radix UI, and TypeScript. It also outlines system boundaries, component interactions, and data flow patterns, along with architectural decisions, constraints, and scalability considerations.
+This document describes the SmartView Portal's microservices architecture featuring a Next.js 14 frontend with App Router and a NestJS backend REST API, connected through a PostgreSQL database managed by Prisma ORM. The system implements modern authentication patterns with JWT tokens, provides comprehensive API endpoints for recruitment processes, and demonstrates scalable microservices communication patterns.
 
-## Project Structure
-SmartView Portal follows Next.js 14’s App Router conventions:
-- Pages are defined under src/app with route segments (e.g., /, /about, /features, /pricing).
-- Shared layouts are defined in src/app/layout.tsx and composed per-route.
-- UI primitives and reusable components live under src/components.
-- Design system utilities and shared constants live under src/lib.
-- Build-time configuration is centralized in next.config.mjs and Tailwind configuration in tailwind.config.ts.
+## Microservices Architecture Overview
+SmartView Portal operates as a distributed microservices system with clear separation between frontend and backend services:
 
 ```mermaid
 graph TB
-subgraph "App Router"
-ROOT["src/app/layout.tsx"]
-HOME["src/app/page.tsx"]
-ABOUT["src/app/about/page.tsx"]
-FEATURES["src/app/features/page.tsx"]
-PRICING["src/app/pricing/page.tsx"]
+subgraph "Client Layer"
+NEXT["Next.js 14 Frontend<br/>App Router"]
+AUTH["Auth Context<br/>JWT Management"]
+API["API Client<br/>Axios Interceptors"]
 end
-subgraph "Components"
-HEADER["src/components/layout/Header.tsx"]
-FOOTER["src/components/layout/Footer.tsx"]
-BUTTON["src/components/ui/Button.tsx"]
-HSECTION["src/components/home/HeroSection.tsx"]
-FOSECTION["src/components/home/FeaturesOverview.tsx"]
+subgraph "API Gateway Layer"
+REWRITE["Next.js Rewrites<br/>/api/* → Backend"]
+PROXY["HTTP Proxy<br/>Request Forwarding"]
 end
-subgraph "Lib"
-CONST["src/lib/constants.ts"]
-UTILS["src/lib/utils.ts"]
+subgraph "Backend Services"
+NEST["NestJS Backend<br/>REST API"]
+CONTROLLERS["Controllers<br/>Auth, Users, Questions"]
+SERVICES["Services<br/>Business Logic"]
+GUARDS["Guards<br/>JWT Auth, Role Based"]
 end
-subgraph "Config"
-NEXTCFG["next.config.mjs"]
-TWC["tailwind.config.ts"]
+subgraph "Data Layer"
+PRISMA["Prisma ORM"]
+DB["PostgreSQL Database"]
+SCHEMA["Schema Definition<br/>334 Lines"]
 end
-ROOT --> HEADER
-ROOT --> HOME
-ROOT --> ABOUT
-ROOT --> FEATURES
-ROOT --> PRICING
-ROOT --> FOOTER
-HOME --> HSECTION
-HOME --> FOSECTION
-HEADER --> BUTTON
-HEADER --> CONST
-BUTTON --> UTILS
-HSECTION --> BUTTON
-FOSECTION --> BUTTON
-NEXTCFG --> TWC
+NEXT --> AUTH
+AUTH --> API
+API --> REWRITE
+REWRITE --> PROXY
+PROXY --> NEST
+NEST --> CONTROLLERS
+CONTROLLERS --> SERVICES
+SERVICES --> PRISMA
+PRISMA --> DB
+DB --> SCHEMA
 ```
 
 **Diagram sources**
-- [layout.tsx:1-33](file://smartview-portal/src/app/layout.tsx#L1-L33)
-- [page.tsx:1-18](file://smartview-portal/src/app/page.tsx#L1-L18)
-- [Header.tsx:1-131](file://smartview-portal/src/components/layout/Header.tsx#L1-L131)
-- [Footer.tsx:1-127](file://smartview-portal/src/components/layout/Footer.tsx#L1-L127)
-- [Button.tsx:1-54](file://smartview-portal/src/components/ui/Button.tsx#L1-L54)
-- [HeroSection.tsx:1-125](file://smartview-portal/src/components/home/HeroSection.tsx#L1-L125)
-- [FeaturesOverview.tsx:1-74](file://smartview-portal/src/components/home/FeaturesOverview.tsx#L1-L74)
-- [constants.ts:1-11](file://smartview-portal/src/lib/constants.ts#L1-L11)
-- [utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
-- [next.config.mjs:1-5](file://smartview-portal/next.config.mjs#L1-L5)
-- [tailwind.config.ts:1-20](file://smartview-portal/tailwind.config.ts#L1-L20)
+- [next.config.mjs:1-14](file://smartview-portal/next.config.mjs#L1-L14)
+- [api.ts:1-410](file://smartview-portal/src/lib/api.ts#L1-L410)
+- [AuthContext.tsx:1-215](file://smartview-portal/src/contexts/AuthContext.tsx#L1-L215)
+- [main.ts:1-38](file://smartview-server/src/main.ts#L1-L38)
+- [app.module.ts:1-34](file://smartview-server/src/app.module.ts#L1-L34)
+- [schema.prisma:1-334](file://smartview-server/prisma/schema.prisma#L1-L334)
 
 **Section sources**
-- [layout.tsx:1-33](file://smartview-portal/src/app/layout.tsx#L1-L33)
-- [page.tsx:1-18](file://smartview-portal/src/app/page.tsx#L1-L18)
-- [package.json:1-32](file://smartview-portal/package.json#L1-L32)
-- [next.config.mjs:1-5](file://smartview-portal/next.config.mjs#L1-L5)
-- [tailwind.config.ts:1-20](file://smartview-portal/tailwind.config.ts#L1-L20)
+- [next.config.mjs:1-14](file://smartview-portal/next.config.mjs#L1-L14)
+- [api.ts:1-410](file://smartview-portal/src/lib/api.ts#L1-L410)
+- [AuthContext.tsx:1-215](file://smartview-portal/src/contexts/AuthContext.tsx#L1-L215)
+- [main.ts:1-38](file://smartview-server/src/main.ts#L1-L38)
+- [app.module.ts:1-34](file://smartview-server/src/app.module.ts#L1-L34)
 
-## Core Components
-- Root layout composes global styles, fonts, and shared header/footer around page content.
-- Home page composes marketing sections (hero, features overview, how-it-works, stats, CTA).
-- Layout components (Header, Footer) coordinate navigation, branding, and responsive behavior.
-- UI primitive (Button) encapsulates variant and size variants with composition via Radix Slot.
-- Shared utilities (constants, cn) centralize site metadata, navigation links, and class merging.
+## Frontend Layer - Next.js 14 App Router
+The frontend implements Next.js 14's App Router with modern React patterns:
 
-Key responsibilities:
-- Root layout: global metadata, typography, and page scaffolding.
-- Home page: orchestrates marketing sections.
-- Header: navigation, scroll-aware styling, mobile menu, and responsive breakpoints.
-- Footer: multi-column links and contact info.
-- Button: consistent styling and semantic composition.
-- Constants: site identity and nav links.
-- Utils: cross-cutting class merging and composition helpers.
+### Core Architecture
+- **Root Layout**: Manages global metadata, fonts, and wraps all pages with AuthProvider
+- **File-based Routing**: Automatic route generation from file structure under src/app
+- **Server Components**: Default React Server Components for optimal performance
+- **Client Components**: Explicit client components for interactivity (e.g., Header, Login)
 
-**Section sources**
-- [layout.tsx:1-33](file://smartview-portal/src/app/layout.tsx#L1-L33)
-- [page.tsx:1-18](file://smartview-portal/src/app/page.tsx#L1-L18)
-- [Header.tsx:1-131](file://smartview-portal/src/components/layout/Header.tsx#L1-L131)
-- [Footer.tsx:1-127](file://smartview-portal/src/components/layout/Footer.tsx#L1-L127)
-- [Button.tsx:1-54](file://smartview-portal/src/components/ui/Button.tsx#L1-L54)
-- [constants.ts:1-11](file://smartview-portal/src/lib/constants.ts#L1-L11)
-- [utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
-
-## Architecture Overview
-SmartView Portal uses a layered architecture:
-- Pages layer: route handlers under src/app implementing page components.
-- Components layer: reusable UI and layout components under src/components.
-- Utilities layer: constants and shared utilities under src/lib.
-- Configuration layer: Next.js and Tailwind configurations.
-
-System boundaries:
-- App Router boundary: route segment resolution and page rendering.
-- Component boundary: props contracts and composition patterns.
-- Utility boundary: shared logic for styling and constants.
-- Config boundary: build-time and design system configuration.
-
-```mermaid
-graph TB
-subgraph "Pages"
-P_HOME["Home Page<br/>src/app/page.tsx"]
-P_ABOUT["About Page<br/>src/app/about/page.tsx"]
-P_FEATURES["Features Page<br/>src/app/features/page.tsx"]
-P_PRICING["Pricing Page<br/>src/app/pricing/page.tsx"]
-end
-subgraph "Layout"
-L_ROOT["Root Layout<br/>src/app/layout.tsx"]
-L_HEADER["Header<br/>src/components/layout/Header.tsx"]
-L_FOOTER["Footer<br/>src/components/layout/Footer.tsx"]
-end
-subgraph "UI Primitives"
-U_BUTTON["Button<br/>src/components/ui/Button.tsx"]
-end
-subgraph "Shared"
-S_CONST["Constants<br/>src/lib/constants.ts"]
-S_UTILS["Utils<br/>src/lib/utils.ts"]
-end
-L_ROOT --> L_HEADER
-L_ROOT --> P_HOME
-L_ROOT --> P_ABOUT
-L_ROOT --> P_FEATURES
-L_ROOT --> P_PRICING
-L_ROOT --> L_FOOTER
-P_HOME --> U_BUTTON
-L_HEADER --> U_BUTTON
-L_HEADER --> S_CONST
-U_BUTTON --> S_UTILS
-```
-
-**Diagram sources**
-- [layout.tsx:1-33](file://smartview-portal/src/app/layout.tsx#L1-L33)
-- [page.tsx:1-18](file://smartview-portal/src/app/page.tsx#L1-L18)
-- [about/page.tsx:1-303](file://smartview-portal/src/app/about/page.tsx#L1-L303)
-- [features/page.tsx:1-564](file://smartview-portal/src/app/features/page.tsx#L1-L564)
-- [pricing/page.tsx:1-246](file://smartview-portal/src/app/pricing/page.tsx#L1-L246)
-- [Header.tsx:1-131](file://smartview-portal/src/components/layout/Header.tsx#L1-L131)
-- [Footer.tsx:1-127](file://smartview-portal/src/components/layout/Footer.tsx#L1-L127)
-- [Button.tsx:1-54](file://smartview-portal/src/components/ui/Button.tsx#L1-L54)
-- [constants.ts:1-11](file://smartview-portal/src/lib/constants.ts#L1-L11)
-- [utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
-
-## Detailed Component Analysis
-
-### Root Layout and Global Composition
-Root layout defines metadata, font loading, global CSS, and wraps all pages with a consistent header and footer. It sets up the main content area and ensures consistent typography and spacing.
+### Authentication Context
+The AuthContext provides comprehensive authentication state management:
+- JWT token storage and refresh handling
+- User profile management
+- Role-based routing (Candidate, Interviewer, HR/Admin)
+- Error handling and loading states
 
 ```mermaid
 sequenceDiagram
 participant Browser as "Browser"
 participant Next as "Next.js Runtime"
-participant Root as "RootLayout<br/>src/app/layout.tsx"
-participant Header as "Header<br/>src/components/layout/Header.tsx"
-participant Footer as "Footer<br/>src/components/layout/Footer.tsx"
-Browser->>Next : Request route
-Next->>Root : Render root layout
-Root->>Header : Render header
-Root->>Footer : Render footer
-Root-->>Browser : HTML with global styles and layout
+participant Layout as "RootLayout"
+participant Auth as "AuthContext"
+participant API as "API Client"
+Browser->>Next : Route Request
+Next->>Layout : Render Root Layout
+Layout->>Auth : Initialize Auth State
+Auth->>API : Check Token Validity
+API->>Auth : Token Status Response
+Auth-->>Layout : Authenticated/Unauthenticated
+Layout-->>Browser : Rendered Page with Auth State
 ```
 
 **Diagram sources**
-- [layout.tsx:1-33](file://smartview-portal/src/app/layout.tsx#L1-L33)
+- [layout.tsx:1-36](file://smartview-portal/src/app/layout.tsx#L1-L36)
+- [AuthContext.tsx:52-96](file://smartview-portal/src/contexts/AuthContext.tsx#L52-L96)
+- [api.ts:131-148](file://smartview-portal/src/lib/api.ts#L131-L148)
+
+**Section sources**
+- [layout.tsx:1-36](file://smartview-portal/src/app/layout.tsx#L1-L36)
+- [AuthContext.tsx:1-215](file://smartview-portal/src/contexts/AuthContext.tsx#L1-L215)
+- [login/page.tsx:1-222](file://smartview-portal/src/app/login/page.tsx#L1-L222)
+
+## Backend Layer - NestJS REST API
+The backend implements a modular NestJS architecture with comprehensive service layers:
+
+### Application Structure
+- **Module-based Organization**: Separate modules for Auth, Users, Questions, Exams, Interviews, Applications, Scoring
+- **Global Middleware**: CORS configuration, validation pipes, exception filters, response interceptors
+- **Security**: JWT authentication, role-based authorization, passport integration
+- **Validation**: Class-validator DTOs with transformation and whitelisting
+
+### Core Modules
+```mermaid
+graph TB
+APPMOD["AppModule"]
+CONFIG["ConfigModule"]
+PRISMA["PrismaModule"]
+AUTH["AuthModule"]
+USERS["UsersModule"]
+QUESTIONS["QuestionsModule"]
+EXAMS["ExamsModule"]
+INTERVIEWS["InterviewsModule"]
+APPLICATIONS["ApplicationsModule"]
+SCORING["ScoringModule"]
+SANDBOX["SandboxModule"]
+APPMOD --> CONFIG
+APPMOD --> PRISMA
+APPMOD --> AUTH
+APPMOD --> USERS
+APPMOD --> QUESTIONS
+APPMOD --> EXAMS
+APPMOD --> INTERVIEWS
+APPMOD --> APPLICATIONS
+APPMOD --> SCORING
+APPMOD --> SANDBOX
+```
+
+**Diagram sources**
+- [app.module.ts:15-32](file://smartview-server/src/app.module.ts#L15-L32)
+
+**Section sources**
+- [app.module.ts:1-34](file://smartview-server/src/app.module.ts#L1-L34)
+- [main.ts:1-38](file://smartview-server/src/main.ts#L1-L38)
+
+## Database Layer - Prisma PostgreSQL
+The system uses Prisma ORM with PostgreSQL for data persistence:
+
+### Database Schema
+The schema defines 17 core models with comprehensive relationships:
+- **User Management**: Users, Companies, Roles (CANDIDATE, INTERVIEWER, HR, ADMIN)
+- **Recruitment Pipeline**: Jobs, Applications, Exams, Interviews
+- **Assessment Engine**: Questions, ExamSubmissions, AIScores
+- **Evaluation System**: InterviewerScores, FinalScores, Notifications
+
+### Key Relationships
+```mermaid
+graph TB
+USER["User Model<br/>77-99"] --> COMPANY["Company Model<br/>101-113"]
+USER --> APPLICATION["Application Model<br/>178-197"]
+COMPANY --> JOB["Job Model<br/>115-134"]
+JOB --> APPLICATION
+APPLICATION --> EXAM["Exam Model<br/>199-216"]
+APPLICATION --> INTERVIEW["Interview Model<br/>257-274"]
+EXAM --> EXAMSUB["ExamSubmission Model<br/>218-237"]
+EXAMSUB --> AISCORE["AIScore Model<br/>239-255"]
+INTERVIEW --> INTSCORE["InterviewerScore Model<br/>276-296"]
+APPLICATION --> FINALS["FinalScore Model<br/>298-315"]
+```
+
+**Diagram sources**
+- [schema.prisma:77-334](file://smartview-server/prisma/schema.prisma#L77-L334)
+
+**Section sources**
+- [schema.prisma:1-334](file://smartview-server/prisma/schema.prisma#L1-L334)
+
+## API Gateway and Communication Patterns
+The frontend uses Next.js rewrites to implement an API gateway pattern:
+
+### Request Flow
+```mermaid
+sequenceDiagram
+participant Client as "Client Browser"
+participant Next as "Next.js Server"
+participant Rewrite as "Rewrite Rule"
+participant Backend as "NestJS Backend"
+participant DB as "PostgreSQL"
+Client->>Next : /api/auth/login
+Next->>Rewrite : Match /api/*
+Rewrite->>Backend : Forward to localhost : 3001/api/*
+Backend->>DB : Execute Query
+DB-->>Backend : Return Data
+Backend-->>Next : JSON Response
+Next-->>Client : Proxy Response
+```
+
+**Diagram sources**
+- [next.config.mjs:3-10](file://smartview-portal/next.config.mjs#L3-L10)
+- [api.ts:29-35](file://smartview-portal/src/lib/api.ts#L29-L35)
+
+### API Endpoints
+The backend exposes comprehensive REST endpoints:
+- **Authentication**: `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/me`, `/auth/logout`
+- **Users**: `/users/profile`, `/users`, `/users/:id`
+- **Questions**: `/questions`, `/questions/:id`
+- **Exams**: `/exams/:id`, `/exams/:id/start`, `/exams/:id/submit`
+- **Interviews**: `/interviews`, `/interviews/:id`, `/interviews/:id/score`
+- **Applications**: `/applications/:id/report`, `/applications/:id/finalize`
+- **Scoring**: `/scoring/:submissionId`, `/scoring/exam/:examId`
+
+**Section sources**
+- [next.config.mjs:1-14](file://smartview-portal/next.config.mjs#L1-L14)
+- [api.ts:131-409](file://smartview-portal/src/lib/api.ts#L131-L409)
+- [auth.controller.ts:18-52](file://smartview-server/src/auth/auth.controller.ts#L18-L52)
+
+## Authentication and Authorization Flow
+The system implements a robust JWT-based authentication mechanism:
+
+### Token Management
+```mermaid
+stateDiagram-v2
+[*] --> Initialized
+Initialized --> CheckingToken : App Load
+CheckingToken --> ValidToken : Token Found
+CheckingToken --> NoToken : No Token
+ValidToken --> Refreshing : 401 Unauthorized
+ValidToken --> Active : Valid Token
+Refreshing --> NewToken : Success
+Refreshing --> Logout : Failed
+NewToken --> Active : Updated
+Active --> MakingRequests : Authenticated
+NoToken --> MakingRequests : Guest Mode
+Logout --> [*] : Clear Storage
+```
+
+### Authentication Flow
+1. **Login Process**: Email/password → JWT tokens → LocalStorage storage
+2. **Token Refresh**: Automatic refresh on 401 errors using refresh token
+3. **Role-based Routing**: Redirect to appropriate dashboard based on user role
+4. **Session Management**: Persistent sessions with automatic cleanup on failure
+
+**Diagram sources**
+- [AuthContext.tsx:98-131](file://smartview-portal/src/contexts/AuthContext.tsx#L98-L131)
+- [api.ts:69-128](file://smartview-portal/src/lib/api.ts#L69-L128)
+
+**Section sources**
+- [AuthContext.tsx:1-215](file://smartview-portal/src/contexts/AuthContext.tsx#L1-L215)
+- [api.ts:1-410](file://smartview-portal/src/lib/api.ts#L1-L410)
+- [auth.controller.ts:18-52](file://smartview-server/src/auth/auth.controller.ts#L18-L52)
+
+## Component Architecture
+The frontend maintains a layered component architecture:
+
+### Design System
+- **UI Primitives**: Button component with variant system using class-variance-authority
+- **Layout Components**: Header with navigation, Footer with links
+- **Page Components**: Marketing sections (Hero, Features, HowItWorks, Stats, CTA)
+- **Context Providers**: AuthContext for state management
+
+### Component Composition
+```mermaid
+graph TB
+ROOT["Root Layout<br/>layout.tsx"] --> HEADER["Header<br/>Header.tsx"]
+ROOT --> MAIN["Main Content<br/>Page Components"]
+MAIN --> HOME["Home Page<br/>page.tsx"]
+HOME --> HERO["HeroSection<br/>HeroSection.tsx"]
+HOME --> FEATURES["FeaturesOverview<br/>FeaturesOverview.tsx"]
+HOME --> HOWITWORKS["HowItWorks<br/>HowItWorks.tsx"]
+HOME --> STATS["StatsSection<br/>StatsSection.tsx"]
+HOME --> CTA["CTASection<br/>CTASection.tsx"]
+ROOT --> FOOTER["Footer<br/>Footer.tsx"]
+HEADER --> BUTTON["Button<br/>Button.tsx"]
+```
+
+**Diagram sources**
+- [layout.tsx:19-35](file://smartview-portal/src/app/layout.tsx#L19-L35)
+- [page.tsx:7-17](file://smartview-portal/src/app/page.tsx#L7-L17)
 - [Header.tsx:1-131](file://smartview-portal/src/components/layout/Header.tsx#L1-L131)
 - [Footer.tsx:1-127](file://smartview-portal/src/components/layout/Footer.tsx#L1-L127)
+- [Button.tsx:1-54](file://smartview-portal/src/components/ui/Button.tsx#L1-L54)
 
 **Section sources**
-- [layout.tsx:1-33](file://smartview-portal/src/app/layout.tsx#L1-L33)
+- [layout.tsx:1-36](file://smartview-portal/src/app/layout.tsx#L1-L36)
+- [page.tsx:1-18](file://smartview-portal/src/app/page.tsx#L1-L18)
+- [Header.tsx:1-131](file://smartview-portal/src/components/layout/Header.tsx#L1-L131)
+- [Footer.tsx:1-127](file://smartview-portal/src/components/layout/Footer.tsx#L1-L127)
+- [Button.tsx:1-54](file://smartview-portal/src/components/ui/Button.tsx#L1-L54)
 
-### Home Page Composition
-The home page composes multiple marketing sections. Each section is a self-contained component that renders specific UI blocks.
+## Data Flow Patterns
+The system implements consistent data flow patterns across the microservices:
 
+### Request-Response Cycle
 ```mermaid
 sequenceDiagram
-participant Browser as "Browser"
-participant Home as "Home Page<br/>src/app/page.tsx"
-participant Hero as "HeroSection<br/>src/components/home/HeroSection.tsx"
-participant Features as "FeaturesOverview<br/>src/components/home/FeaturesOverview.tsx"
-Browser->>Home : Navigate to "/"
-Home->>Hero : Render hero block
-Home->>Features : Render features overview
-Hero-->>Browser : Rendered hero section
-Features-->>Browser : Rendered features section
+participant Client as "Client Component"
+participant API as "API Client"
+participant Next as "Next.js Rewrite"
+participant Nest as "NestJS Controller"
+participant Service as "Service Layer"
+participant Prisma as "Prisma Client"
+participant DB as "PostgreSQL"
+Client->>API : Call API Function
+API->>Next : HTTP Request /api/*
+Next->>Nest : Forward Request
+Nest->>Service : Business Logic
+Service->>Prisma : Database Query
+Prisma->>DB : SQL Query
+DB-->>Prisma : Query Result
+Prisma-->>Service : Domain Object
+Service-->>Nest : Response Data
+Nest-->>Next : HTTP Response
+Next-->>API : Proxy Response
+API-->>Client : Processed Data
 ```
 
-**Diagram sources**
-- [page.tsx:1-18](file://smartview-portal/src/app/page.tsx#L1-L18)
-- [HeroSection.tsx:1-125](file://smartview-portal/src/components/home/HeroSection.tsx#L1-L125)
-- [FeaturesOverview.tsx:1-74](file://smartview-portal/src/components/home/FeaturesOverview.tsx#L1-L74)
-
-**Section sources**
-- [page.tsx:1-18](file://smartview-portal/src/app/page.tsx#L1-L18)
-
-### Header Component Interaction
-Header manages scroll-aware styling, mobile menu toggling, and navigation highlighting based on current path. It consumes constants for navigation and uses the shared Button primitive.
-
-```mermaid
-flowchart TD
-Start(["Header mount"]) --> Scroll["Listen to scroll events"]
-Scroll --> IsScrolled{"Scrolled > threshold?"}
-IsScrolled --> |Yes| ApplyBlur["Apply backdrop blur and shadow"]
-IsScrolled --> |No| ResetStyles["Reset to transparent"]
-Start --> Pathname["Read current path"]
-Pathname --> Highlight["Highlight active nav item"]
-Start --> MobileToggle["Toggle mobile menu"]
-MobileToggle --> RenderMenu["Render mobile menu panel"]
-RenderMenu --> CloseOnSelect["Close on link click"]
-```
+### Error Handling
+- **Frontend**: Axios interceptors handle 401 errors and automatic token refresh
+- **Backend**: Global exception filter standardizes error responses
+- **Consistent Format**: All responses follow `{statusCode, message, data}` structure
 
 **Diagram sources**
-- [Header.tsx:1-131](file://smartview-portal/src/components/layout/Header.tsx#L1-L131)
-- [constants.ts:1-11](file://smartview-portal/src/lib/constants.ts#L1-L11)
-- [Button.tsx:1-54](file://smartview-portal/src/components/ui/Button.tsx#L1-L54)
+- [api.ts:69-128](file://smartview-portal/src/lib/api.ts#L69-L128)
+- [response.interceptor.ts:17-29](file://smartview-server/src/common/interceptors/response.interceptor.ts#L17-L29)
+- [http-exception.filter.ts:12-61](file://smartview-server/src/common/filters/http-exception.filter.ts#L12-L61)
 
 **Section sources**
-- [Header.tsx:1-131](file://smartview-portal/src/components/layout/Header.tsx#L1-L131)
+- [api.ts:1-410](file://smartview-portal/src/lib/api.ts#L1-L410)
+- [response.interceptor.ts:1-31](file://smartview-server/src/common/interceptors/response.interceptor.ts#L1-L31)
+- [http-exception.filter.ts:1-62](file://smartview-server/src/common/filters/http-exception.filter.ts#L1-L62)
 
-### Button Primitive and Variants
-Button implements a variant system using class-variance-authority and composition via Radix Slot. It merges classes using the shared cn utility.
+## System Boundaries and Integration Points
+The microservices architecture establishes clear system boundaries:
 
-```mermaid
-classDiagram
-class Button {
-+variant : "primary" | "secondary" | "outline" | "ghost"
-+size : "sm" | "md" | "lg"
-+asChild : boolean
-+render()
-}
-class Utils {
-+cn(...inputs) : string
-}
-Button --> Utils : "uses cn() for class merging"
-```
+### External Dependencies
+- **Frontend**: Next.js 14, React 18, Tailwind CSS, Axios, TypeScript
+- **Backend**: NestJS 11, Prisma 7.6, PostgreSQL, Passport, JWT
+- **Development**: ESLint, Jest, Docker Compose, Prisma Studio
 
-**Diagram sources**
-- [Button.tsx:1-54](file://smartview-portal/src/components/ui/Button.tsx#L1-L54)
-- [utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
-
-**Section sources**
-- [Button.tsx:1-54](file://smartview-portal/src/components/ui/Button.tsx#L1-L54)
-- [utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
-
-### Design System and Tailwind Integration
-Tailwind is configured to scan pages, components, and app directories. The design system relies on:
-- Tailwind utilities for layout and colors.
-- CSS variables for theme tokens.
-- Utility function cn for safe class merging.
-
-```mermaid
-graph LR
-TW["Tailwind Config<br/>tailwind.config.ts"] --> Scan["content globs"]
-Scan --> Pages["src/app/**/*.{js,ts,jsx,tsx,mdx}"]
-Scan --> Components["src/components/**/*.{js,ts,jsx,tsx,mdx}"]
-Scan --> AppDir["src/app/**/*.{js,ts,jsx,tsx,mdx}"]
-TW --> Theme["theme.extend.colors"]
-Theme --> Tokens["CSS variables (--background, --foreground)"]
-```
-
-**Diagram sources**
-- [tailwind.config.ts:1-20](file://smartview-portal/tailwind.config.ts#L1-L20)
-
-**Section sources**
-- [tailwind.config.ts:1-20](file://smartview-portal/tailwind.config.ts#L1-L20)
-- [utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
-
-### Additional Pages: About, Features, Pricing
-These pages demonstrate consistent composition patterns:
-- About page: structured sections for vision, mission, problems solved, team, tech advantages, and CTA.
-- Features page: detailed feature showcases with interactive elements and visual mockups.
-- Pricing page: plan cards, feature lists, and FAQ sections.
-
-```mermaid
-sequenceDiagram
-participant Browser as "Browser"
-participant About as "About Page<br/>src/app/about/page.tsx"
-participant Features as "Features Page<br/>src/app/features/page.tsx"
-participant Pricing as "Pricing Page<br/>src/app/pricing/page.tsx"
-Browser->>About : Navigate to "/about"
-About-->>Browser : Rendered about sections
-Browser->>Features : Navigate to "/features"
-Features-->>Browser : Rendered feature sections
-Browser->>Pricing : Navigate to "/pricing"
-Pricing-->>Browser : Rendered pricing sections
-```
-
-**Diagram sources**
-- [about/page.tsx:1-303](file://smartview-portal/src/app/about/page.tsx#L1-L303)
-- [features/page.tsx:1-564](file://smartview-portal/src/app/features/page.tsx#L1-L564)
-- [pricing/page.tsx:1-246](file://smartview-portal/src/app/pricing/page.tsx#L1-L246)
-
-**Section sources**
-- [about/page.tsx:1-303](file://smartview-portal/src/app/about/page.tsx#L1-L303)
-- [features/page.tsx:1-564](file://smartview-portal/src/app/features/page.tsx#L1-L564)
-- [pricing/page.tsx:1-246](file://smartview-portal/src/app/pricing/page.tsx#L1-L246)
-
-## Dependency Analysis
-External dependencies and their roles:
-- Next.js runtime and App Router for file-based routing and SSR/SSG.
-- React and React DOM for UI rendering.
-- Tailwind CSS for utility-first styling.
-- Radix UI Slot for component composition.
-- class-variance-authority for variant systems.
-- lucide-react for icons.
-- clsx and tailwind-merge for class merging.
+### Integration Points
+- **API Gateway**: Next.js rewrite rules forwarding `/api/*` requests
+- **Authentication**: JWT tokens with refresh mechanism
+- **Database**: Prisma ORM with PostgreSQL adapter
+- **CORS**: Configured for development environment
 
 ```mermaid
 graph TB
-APP["SmartView Portal"]
-NEXT["next"]
-REACT["react + react-dom"]
-TAILWIND["tailwindcss"]
-RADIX["@radix-ui/react-slot"]
-CVA["class-variance-authority"]
-ICONS["lucide-react"]
-CLSX["clsx"]
-TM["tailwind-merge"]
-APP --> NEXT
-APP --> REACT
-APP --> TAILWIND
-APP --> RADIX
-APP --> CVA
-APP --> ICONS
-APP --> CLSX
-APP --> TM
+FRONTEND["Frontend<br/>Next.js 14"] --> GATEWAY["API Gateway<br/>Rewrite Rules"]
+GATEWAY --> BACKEND["Backend<br/>NestJS 11"]
+BACKEND --> DATABASE["Database<br/>PostgreSQL"]
+DATABASE --> PRISMA["ORM<br/>Prisma Client"]
 ```
 
 **Diagram sources**
-- [package.json:1-32](file://smartview-portal/package.json#L1-L32)
+- [package.json:11-22](file://smartview-portal/package.json#L11-L22)
+- [package.json:22-40](file://smartview-server/package.json#L22-L40)
 
 **Section sources**
-- [package.json:1-32](file://smartview-portal/package.json#L1-L32)
+- [package.json:1-34](file://smartview-portal/package.json#L1-L34)
+- [package.json:1-92](file://smartview-server/package.json#L1-L92)
 
-## Performance Considerations
-- File-based routing minimizes dynamic routing overhead and enables static generation where applicable.
-- Component composition reduces duplication and improves maintainability.
-- Tailwind scanning scope can be optimized to reduce build times; current globs cover pages, components, and app directories.
-- Using CSS variables for theme tokens avoids unnecessary re-renders.
-- Prefer client components only when necessary (e.g., Header uses client directives for interactivity).
+## Performance and Scalability Considerations
+### Frontend Optimization
+- **Static Generation**: Next.js App Router enables static generation where possible
+- **Component Splitting**: Automatic code splitting with React Server Components
+- **Asset Optimization**: Built-in image optimization and font optimization
+- **Caching Strategy**: HTTP caching headers and efficient API response formats
+
+### Backend Scalability
+- **Horizontal Scaling**: Stateless NestJS services can scale independently
+- **Connection Pooling**: Prisma connection pooling for database efficiency
+- **CORS Configuration**: Optimized for development and production environments
+- **Middleware Pipeline**: Efficient request processing with validation and filtering
+
+### Database Performance
+- **Indexing Strategy**: Strategic indexes on frequently queried fields
+- **Query Optimization**: Prisma's type-safe queries with efficient SQL generation
+- **Connection Management**: Connection pooling and transaction optimization
 
 ## Troubleshooting Guide
-Common areas to check:
-- Routing issues: Verify route segment names match file paths under src/app.
-- Layout problems: Confirm RootLayout wraps children and includes global styles.
-- Styling inconsistencies: Ensure cn is used for class merging and Tailwind content globs include new components.
-- Navigation highlights: Confirm usePathname matches NAV_LINKS href values.
+### Common Issues and Solutions
+
+#### Authentication Problems
+- **Token Not Found**: Check localStorage keys (access_token, refresh_token, user)
+- **401 Errors**: Verify token refresh mechanism and backend connectivity
+- **Role-based Redirects**: Ensure user role is correctly stored and processed
+
+#### API Communication Issues
+- **Proxy Failures**: Verify Next.js rewrite rules and backend service availability
+- **CORS Errors**: Check backend CORS configuration and origin settings
+- **Response Format**: Ensure API responses follow the standardized format
+
+#### Database Connectivity
+- **Connection Issues**: Verify PostgreSQL service availability and Prisma configuration
+- **Migration Problems**: Check Prisma schema and migration status
+- **Query Performance**: Monitor slow queries and optimize indexing
 
 **Section sources**
-- [layout.tsx:1-33](file://smartview-portal/src/app/layout.tsx#L1-L33)
-- [Header.tsx:1-131](file://smartview-portal/src/components/layout/Header.tsx#L1-L131)
-- [constants.ts:1-11](file://smartview-portal/src/lib/constants.ts#L1-L11)
-- [utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
-- [tailwind.config.ts:1-20](file://smartview-portal/tailwind.config.ts#L1-L20)
+- [AuthContext.tsx:32-50](file://smartview-portal/src/contexts/AuthContext.tsx#L32-L50)
+- [next.config.mjs:3-10](file://smartview-portal/next.config.mjs#L3-L10)
+- [main.ts:12-17](file://smartview-server/src/main.ts#L12-L17)
 
 ## Conclusion
-SmartView Portal leverages Next.js 14 App Router to deliver a modular, scalable frontend. The design system centers on Tailwind CSS, a composable Button primitive, and shared constants/utilities. The layered architecture promotes separation of concerns, while file-based routing simplifies navigation and improves performance. The approach supports future growth through consistent component composition and configurable design tokens.
+SmartView Portal demonstrates a modern microservices architecture combining Next.js 14's App Router with NestJS backend services and Prisma ORM. The system provides comprehensive authentication, scalable API design, and efficient data management. The clear separation between frontend and backend services, combined with robust error handling and performance optimizations, creates a solid foundation for future growth and feature expansion. The architecture supports horizontal scaling, maintains security through JWT authentication, and provides a consistent developer experience through TypeScript and modular design patterns.

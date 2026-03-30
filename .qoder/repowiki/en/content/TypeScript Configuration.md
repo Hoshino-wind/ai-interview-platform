@@ -3,9 +3,13 @@
 <cite>
 **Referenced Files in This Document**
 - [tsconfig.json](file://smartview-portal/tsconfig.json)
+- [tsconfig.json](file://smartview-server/tsconfig.json)
+- [tsconfig.build.json](file://smartview-server/tsconfig.build.json)
+- [nest-cli.json](file://smartview-server/nest-cli.json)
 - [next.config.mjs](file://smartview-portal/next.config.mjs)
 - [next-env.d.ts](file://smartview-portal/next-env.d.ts)
 - [package.json](file://smartview-portal/package.json)
+- [package.json](file://smartview-server/package.json)
 - [tailwind.config.ts](file://smartview-portal/tailwind.config.ts)
 - [.eslintrc.json](file://smartview-portal/.eslintrc.json)
 - [src/app/layout.tsx](file://smartview-portal/src/app/layout.tsx)
@@ -17,7 +21,17 @@
 - [src/components/layout/Footer.tsx](file://smartview-portal/src/components/layout/Footer.tsx)
 - [src/lib/utils.ts](file://smartview-portal/src/lib/utils.ts)
 - [src/lib/constants.ts](file://smartview-portal/src/lib/constants.ts)
+- [src/main.ts](file://smartview-server/src/main.ts)
+- [src/app.module.ts](file://smartview-server/src/app.module.ts)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Added comprehensive NestJS TypeScript configuration documentation
+- Updated Next.js 14+ integration patterns and modern TS setup
+- Documented dual-platform architecture with portal and server TypeScript configurations
+- Enhanced type safety patterns for both frontend and backend applications
+- Added NestJS dependency injection and module system type patterns
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -25,142 +39,163 @@
 3. [Core Components](#core-components)
 4. [Architecture Overview](#architecture-overview)
 5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
-10. [Appendices](#appendices)
+6. [NestJS Backend TypeScript Configuration](#nestjs-backend-typescript-configuration)
+7. [Dependency Analysis](#dependency-analysis)
+8. [Performance Considerations](#performance-considerations)
+9. [Troubleshooting Guide](#troubleshooting-guide)
+10. [Conclusion](#conclusion)
+11. [Appendices](#appendices)
 
 ## Introduction
-This document explains the TypeScript configuration and type system used in the SmartView Portal Next.js application. It covers compiler options, path mapping, strictness settings, and integration with Next.js App Router. It also documents component typing patterns, prop interfaces, and generic type usage across the codebase. Finally, it provides practical guidelines for maintaining type safety, extending type definitions, and resolving common TypeScript issues within this project’s development workflow.
+This document explains the TypeScript configuration and type system used in the SmartView Platform, a modern full-stack application featuring Next.js 14+ frontend and NestJS backend. The platform demonstrates contemporary TypeScript practices with strict type checking, modern module resolution, and seamless integration between frontend and backend services. It covers compiler options, path mapping, strictness settings, and integration with Next.js App Router and NestJS dependency injection system. The documentation also details component typing patterns, prop interfaces, generic type usage, and the unique type safety considerations for both client-side and server-side development.
 
 ## Project Structure
-The SmartView Portal follows a Next.js App Router project layout with a dedicated src directory. TypeScript configuration is centralized in tsconfig.json, while Next.js runtime types are declared via next-env.d.ts. Tailwind CSS integrates with TypeScript through typed configuration, and ESLint enforces TypeScript-aware linting rules.
+The SmartView Platform consists of two distinct TypeScript projects: a Next.js 14+ frontend (smartview-portal) and a NestJS backend (smartview-server). Each project maintains its own TypeScript configuration optimized for its specific runtime environment. The frontend uses modern App Router patterns with strict type checking, while the backend leverages NestJS's dependency injection and modular architecture with comprehensive type safety.
 
 ```mermaid
 graph TB
-subgraph "SmartView Portal"
-TS["tsconfig.json"]
-ENV["next-env.d.ts"]
-NEXT["next.config.mjs"]
-PKG["package.json"]
-TW["tailwind.config.ts"]
-ESL["eslint.json"]
-APP["src/app/* (pages)"]
-CMP["src/components/* (UI + layout)"]
-LIB["src/lib/* (constants, utils)"]
+subgraph "SmartView Platform Architecture"
+subgraph "Frontend - Next.js 14+"
+PORTAL_TS["smartview-portal/tsconfig.json"]
+PORTAL_PKG["smartview-portal/package.json"]
+PORTAL_NEXT["smartview-portal/next.config.mjs"]
+PORTAL_ENV["smartview-portal/next-env.d.ts"]
+PORTAL_APP["src/app/* (pages)"]
+PORTAL_CMP["src/components/* (UI + layout)"]
+PORTAL_LIB["src/lib/* (constants, utils)"]
 end
-PKG --> TS
-PKG --> ESL
-TS --> ENV
-TS --> APP
-TS --> CMP
-TS --> LIB
-TW --> CMP
-TW --> APP
-NEXT --> APP
+subgraph "Backend - NestJS"
+SERVER_TS["smartview-server/tsconfig.json"]
+SERVER_BUILD["smartview-server/tsconfig.build.json"]
+SERVER_CLI["smartview-server/nest-cli.json"]
+SERVER_PKG["smartview-server/package.json"]
+SERVER_MAIN["src/main.ts"]
+SERVER_MODULE["src/app.module.ts"]
+end
+PORTAL_TS --> PORTAL_NEXT
+PORTAL_TS --> PORTAL_ENV
+PORTAL_TS --> PORTAL_APP
+PORTAL_TS --> PORTAL_CMP
+PORTAL_TS --> PORTAL_LIB
+SERVER_TS --> SERVER_CLI
+SERVER_TS --> SERVER_BUILD
+SERVER_TS --> SERVER_MAIN
+SERVER_TS --> SERVER_MODULE
+end
 ```
 
 **Diagram sources**
 - [tsconfig.json:1-27](file://smartview-portal/tsconfig.json#L1-L27)
+- [tsconfig.json:1-26](file://smartview-server/tsconfig.json#L1-L26)
+- [tsconfig.build.json:1-5](file://smartview-server/tsconfig.build.json#L1-L5)
+- [nest-cli.json:1-9](file://smartview-server/nest-cli.json#L1-L9)
+- [next.config.mjs:1-14](file://smartview-portal/next.config.mjs#L1-L14)
 - [next-env.d.ts:1-6](file://smartview-portal/next-env.d.ts#L1-L6)
-- [next.config.mjs:1-5](file://smartview-portal/next.config.mjs#L1-L5)
-- [package.json:1-32](file://smartview-portal/package.json#L1-L32)
-- [tailwind.config.ts:1-20](file://smartview-portal/tailwind.config.ts#L1-L20)
-- [.eslintrc.json:1-4](file://smartview-portal/.eslintrc.json#L1-L4)
 
 **Section sources**
 - [tsconfig.json:1-27](file://smartview-portal/tsconfig.json#L1-L27)
+- [tsconfig.json:1-26](file://smartview-server/tsconfig.json#L1-L26)
+- [tsconfig.build.json:1-5](file://smartview-server/tsconfig.build.json#L1-L5)
+- [nest-cli.json:1-9](file://smartview-server/nest-cli.json#L1-L9)
+- [next.config.mjs:1-14](file://smartview-portal/next.config.mjs#L1-L14)
 - [next-env.d.ts:1-6](file://smartview-portal/next-env.d.ts#L1-L6)
-- [next.config.mjs:1-5](file://smartview-portal/next.config.mjs#L1-L5)
-- [package.json:1-32](file://smartview-portal/package.json#L1-L32)
-- [tailwind.config.ts:1-20](file://smartview-portal/tailwind.config.ts#L1-L20)
-- [.eslintrc.json:1-4](file://smartview-portal/.eslintrc.json#L1-L4)
 
 ## Core Components
-This section focuses on TypeScript configuration and type-related patterns used across the application.
+This section focuses on TypeScript configuration and type-related patterns used across both the SmartView Portal and SmartView Server applications.
 
-- Compiler options and strictness
-  - Strict mode enabled for robust type checking.
-  - No emit to rely on Next.js type generation and bundling.
-  - Bundler module resolution and isolated modules for modern builds.
-  - JSX preservation aligns with Next.js App Router compilation pipeline.
-  - Incremental builds improve developer experience.
-  - Plugin support for Next.js TypeScript integration.
+### Frontend TypeScript Configuration (Next.js 14+)
+- **Compiler options and strictness**: Strict mode enabled with modern ESNext features, no emit for Next.js compilation pipeline, bundler module resolution for optimal performance.
+- **Path mapping**: Workspace alias @/* mapped to ./src/* for consistent imports across app, components, and lib directories.
+- **Type generation**: next-env.d.ts declares Next.js ambient types, .next/types integration for route type safety.
+- **Toolchain alignment**: TypeScript 5.x with Next 14.2.35, ESLint with Next.js presets for web vitals compliance.
 
-- Path mapping
-  - Workspace alias @/* mapped to ./src/* for concise imports across app, components, and lib.
-
-- Type generation and environment
-  - next-env.d.ts declares Next.js ambient types for app and image types.
-  - .next/types is included to consume Next.js-generated route and app types.
-
-- Toolchain alignment
-  - TypeScript version pinned to ^5 in devDependencies.
-  - ESLint extends Next’s TypeScript and web vitals presets.
+### Backend TypeScript Configuration (NestJS)
+- **Modern Node.js targeting**: ES2023 target with experimental decorators and metadata for NestJS features.
+- **Strict null checking**: Comprehensive null safety with strictNullChecks enabled.
+- **Build separation**: Distinct tsconfig.build.json for production builds excluding tests and development files.
+- **Module system**: nodenext module resolution optimized for NestJS dependency injection patterns.
 
 **Section sources**
 - [tsconfig.json:1-27](file://smartview-portal/tsconfig.json#L1-L27)
-- [next-env.d.ts:1-6](file://smartview-portal/next-env.d.ts#L1-L6)
-- [package.json:21-30](file://smartview-portal/package.json#L21-L30)
-- [.eslintrc.json:1-4](file://smartview-portal/.eslintrc.json#L1-L4)
+- [tsconfig.json:1-26](file://smartview-server/tsconfig.json#L1-L26)
+- [tsconfig.build.json:1-5](file://smartview-server/tsconfig.build.json#L1-L5)
+- [package.json:11-34](file://smartview-portal/package.json#L11-L34)
+- [package.json:22-70](file://smartview-server/package.json#L22-L70)
 
 ## Architecture Overview
-The TypeScript configuration integrates tightly with Next.js App Router and Tailwind CSS. The build pipeline leverages Next’s type generation and plugin support, while path aliases simplify imports across the codebase.
+The SmartView Platform demonstrates a sophisticated dual-environment TypeScript architecture. The frontend leverages Next.js App Router with strict type checking and modern JSX handling, while the backend utilizes NestJS's modular architecture with comprehensive dependency injection type safety. Both environments benefit from shared TypeScript patterns including path aliases, strict mode, and incremental compilation for optimal developer experience.
 
 ```mermaid
 graph TB
-TS["tsconfig.json<br/>Compiler Options + Paths"]
-PLG["Next Plugin<br/>(tsconfig.plugins)"]
-ENV["next-env.d.ts<br/>Next Ambient Types"]
-INC["Include Patterns<br/>tsconfig.include"]
-APP["App Router Pages<br/>src/app/*"]
-CMP["Components<br/>src/components/*"]
-LIB["Lib Utilities<br/>src/lib/*"]
-TS --> PLG
-TS --> ENV
-TS --> INC
-INC --> APP
-INC --> CMP
-INC --> LIB
-APP --> CMP
-CMP --> LIB
+subgraph "Frontend Pipeline"
+FRONT_TS["Next.js TypeScript Config"]
+FRONT_PLG["Next Plugin Integration"]
+FRONT_ENV["Next Environment Types"]
+FRONT_INC["Include Patterns<br/>tsconfig.include"]
+FRONT_APP["App Router Pages<br/>src/app/*"]
+FRONT_CMP["Components<br/>src/components/*"]
+FRONT_LIB["Lib Utilities<br/>src/lib/*"]
+end
+subgraph "Backend Pipeline"
+BACK_TS["NestJS TypeScript Config"]
+BACK_DEC["Experimental Decorators"]
+BACK_META["Metadata Reflection"]
+BACK_BUILD["Build Separation<br/>tsconfig.build.json"]
+BACK_MAIN["Application Bootstrap<br/>src/main.ts"]
+BACK_MODULE["Module System<br/>src/app.module.ts"]
+end
+FRONT_TS --> FRONT_PLG
+FRONT_TS --> FRONT_ENV
+FRONT_TS --> FRONT_INC
+FRONT_INC --> FRONT_APP
+FRONT_INC --> FRONT_CMP
+FRONT_INC --> FRONT_LIB
+BACK_TS --> BACK_DEC
+BACK_TS --> BACK_META
+BACK_TS --> BACK_BUILD
+BACK_BUILD --> BACK_MAIN
+BACK_MAIN --> BACK_MODULE
 ```
 
 **Diagram sources**
 - [tsconfig.json:1-27](file://smartview-portal/tsconfig.json#L1-L27)
-- [next-env.d.ts:1-6](file://smartview-portal/next-env.d.ts#L1-L6)
+- [tsconfig.json:1-26](file://smartview-server/tsconfig.json#L1-L26)
+- [tsconfig.build.json:1-5](file://smartview-server/tsconfig.build.json#L1-L5)
+- [src/main.ts:1-38](file://smartview-server/src/main.ts#L1-L38)
+- [src/app.module.ts:1-34](file://smartview-server/src/app.module.ts#L1-L34)
 
 **Section sources**
 - [tsconfig.json:1-27](file://smartview-portal/tsconfig.json#L1-L27)
-- [next-env.d.ts:1-6](file://smartview-portal/next-env.d.ts#L1-L6)
+- [tsconfig.json:1-26](file://smartview-server/tsconfig.json#L1-L26)
+- [tsconfig.build.json:1-5](file://smartview-server/tsconfig.build.json#L1-L5)
+- [src/main.ts:1-38](file://smartview-server/src/main.ts#L1-L38)
+- [src/app.module.ts:1-34](file://smartview-server/src/app.module.ts#L1-L34)
 
 ## Detailed Component Analysis
 
 ### TypeScript Configuration and Path Mapping
-- Strictness and emit control
-  - strict: true enables exhaustive type checks.
-  - noEmit: true prevents manual compilation; Next handles emit.
-- Module and resolution
-  - module: esnext and moduleResolution: bundler align with modern bundlers.
-  - isolatedModules: true ensures single-file compilation safety.
-- JSX and incremental builds
-  - jsx: preserve aligns with Next’s JSX handling.
-  - incremental: true accelerates rebuilds.
-- Plugins and path mapping
-  - plugins include Next plugin for enhanced DX.
-  - paths map @/* to ./src/* for consistent imports.
+**Frontend Configuration (Next.js 14+)**
+- **Strictness and emit control**: strict: true enables exhaustive type checks, noEmit: true prevents manual compilation as Next handles type generation.
+- **Modern module resolution**: module: esnext with moduleResolution: bundler for optimal tree-shaking and modern bundler compatibility.
+- **JSX handling**: jsx: preserve aligns with Next's App Router compilation pipeline for optimal performance.
+- **Path mapping**: @/* alias to ./src/* simplifies imports across the entire application structure.
+
+**Backend Configuration (NestJS)**
+- **Node.js targeting**: ES2023 target with experimental decorators for advanced NestJS features.
+- **Metadata reflection**: emitDecoratorMetadata and experimentalDecorators enabled for dependency injection and validation pipes.
+- **Strict null checking**: Comprehensive null safety with strictNullChecks for reliable server-side type safety.
 
 **Section sources**
 - [tsconfig.json:1-27](file://smartview-portal/tsconfig.json#L1-L27)
+- [tsconfig.json:1-26](file://smartview-server/tsconfig.json#L1-L26)
 
 ### Next.js Integration and Type-Safe Routing
-- App Router pages
-  - Root layout defines Metadata type and children prop typing.
-  - Page components import shared UI and constants using path aliases.
-- Type-safe navigation
-  - Next’s Link and usePathname provide strongly-typed routing primitives.
-  - Constants define nav links with labeled hrefs for safer linking.
+The frontend implements modern Next.js 14+ patterns with comprehensive type safety:
+
+- **Root layout metadata**: Uses Metadata type from next for SEO optimization and Open Graph properties.
+- **Font optimization**: Inter font with CSS variable support for consistent typography.
+- **Context integration**: AuthProvider wraps the application shell for global state management.
+- **Type-safe navigation**: Next's Link component and usePathname hook provide strongly-typed routing primitives.
 
 ```mermaid
 sequenceDiagram
@@ -168,10 +203,11 @@ participant Browser as "Browser"
 participant Layout as "RootLayout (layout.tsx)"
 participant Header as "Header (Header.tsx)"
 participant Footer as "Footer (Footer.tsx)"
-participant Utils as "cn (utils.ts)"
+participant Auth as "AuthProvider"
 Browser->>Layout : Render app shell
-Layout->>Header : Render header with navigation
-Header->>Utils : Compute conditional classNames
+Layout->>Auth : Wrap with authentication provider
+Auth->>Header : Render header with navigation
+Header->>Header : Type-safe navigation via usePathname()
 Header-->>Layout : Rendered header
 Layout->>Footer : Render footer
 Footer-->>Layout : Rendered footer
@@ -179,69 +215,71 @@ Layout-->>Browser : Final DOM with metadata
 ```
 
 **Diagram sources**
-- [src/app/layout.tsx:1-33](file://smartview-portal/src/app/layout.tsx#L1-L33)
+- [src/app/layout.tsx:1-36](file://smartview-portal/src/app/layout.tsx#L1-L36)
 - [src/components/layout/Header.tsx:1-131](file://smartview-portal/src/components/layout/Header.tsx#L1-L131)
 - [src/components/layout/Footer.tsx:1-127](file://smartview-portal/src/components/layout/Footer.tsx#L1-L127)
-- [src/lib/utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
 
 **Section sources**
-- [src/app/layout.tsx:1-33](file://smartview-portal/src/app/layout.tsx#L1-L33)
+- [src/app/layout.tsx:1-36](file://smartview-portal/src/app/layout.tsx#L1-L36)
 - [src/components/layout/Header.tsx:1-131](file://smartview-portal/src/components/layout/Header.tsx#L1-L131)
 - [src/components/layout/Footer.tsx:1-127](file://smartview-portal/src/components/layout/Footer.tsx#L1-L127)
-- [src/lib/utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
 
 ### Component Typing Patterns and Prop Interfaces
-- Button component
-  - Uses forwardRef with explicit HTMLButtonElement target.
-  - Prop interface extends button attributes and variant props from class-variance-authority.
-  - Supports asChild pattern via @radix-ui/react-slot for composition.
-  - Utility function cn merges Tailwind classes safely.
+The Button component exemplifies modern React TypeScript patterns with comprehensive type safety:
+
+- **ForwardRef implementation**: Uses React.forwardRef with explicit HTMLButtonElement target for proper ref handling.
+- **Variant composition**: Integrates with class-variance-authority for type-safe variant and size props.
+- **Composition patterns**: Supports asChild pattern via @radix-ui/react-slot for semantic HTML composition.
+- **Utility integration**: cn function from utils.ts provides type-safe class merging with clsx and twMerge.
 
 ```mermaid
 classDiagram
 class ButtonProps {
-+React.ButtonHTMLAttributes<HTMLButtonElement>
-+VariantProps<buttonVariants>
++ButtonHTMLAttributes~HTMLButtonElement~
++VariantProps~buttonVariants~
 +boolean asChild
 }
-class Button {
-+forwardRef<HTMLButtonElement, ButtonProps>
+class ButtonComponent {
++forwardRef~HTMLButtonElement, ButtonProps~
 +displayName : "Button"
 }
-class buttonVariants {
+class ButtonVariants {
 +variants
 +defaultVariants
 }
-Button --> ButtonProps : "implements"
-Button --> buttonVariants : "uses"
+class Utils {
++cn(...ClassValue[]) : string
+}
+ButtonComponent --> ButtonProps : "implements"
+ButtonComponent --> ButtonVariants : "uses"
+ButtonComponent --> Utils : "integrates with"
 ```
 
 **Diagram sources**
 - [src/components/ui/Button.tsx:33-54](file://smartview-portal/src/components/ui/Button.tsx#L33-L54)
+- [src/lib/utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
 
 **Section sources**
 - [src/components/ui/Button.tsx:1-54](file://smartview-portal/src/components/ui/Button.tsx#L1-L54)
 - [src/lib/utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
 
 ### Generic Type Usage and Composition
-- Variadic class merging
-  - cn accepts ClassValue... and merges classes via clsx and twMerge.
-- Variant composition
-  - buttonVariants composes variant and size props; ButtonProps picks those variants via VariantProps.
-- Utility-driven composition
-  - asChild allows Button to render either a button element or a Slot wrapper, enabling semantic composition with Link.
+The platform demonstrates sophisticated generic type patterns:
+
+- **Variadic class merging**: cn function accepts ClassValue... parameters for flexible class composition.
+- **Variant composition**: buttonVariants creates type-safe variant systems with automatic prop inference.
+- **Generic utilities**: Type-safe composition patterns enable reusable, configurable UI components.
 
 **Section sources**
 - [src/lib/utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
 - [src/components/ui/Button.tsx:1-54](file://smartview-portal/src/components/ui/Button.tsx#L1-L54)
 
 ### Type-Safe Routing and Navigation
-- Metadata typing
-  - RootLayout uses Metadata from next to type page metadata.
-- Navigation typing
-  - usePathname returns string; equality checks against nav hrefs ensure type-safe active states.
-- Shared constants
-  - NAV_LINKS provides strongly-typed navigation entries for reuse across components.
+Navigation components implement comprehensive type safety:
+
+- **Metadata typing**: RootLayout uses Metadata from next for SEO optimization.
+- **Navigation typing**: usePathname returns string type; equality checks ensure type-safe active states.
+- **Shared constants**: NAV_LINKS provides strongly-typed navigation entries for consistent navigation behavior.
 
 ```mermaid
 flowchart TD
@@ -260,100 +298,198 @@ ApplyInactive --> End
 - [src/lib/utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
 
 **Section sources**
-- [src/app/layout.tsx:1-33](file://smartview-portal/src/app/layout.tsx#L1-L33)
+- [src/app/layout.tsx:1-36](file://smartview-portal/src/app/layout.tsx#L1-L36)
 - [src/components/layout/Header.tsx:1-131](file://smartview-portal/src/components/layout/Header.tsx#L1-L131)
 - [src/lib/constants.ts:1-11](file://smartview-portal/src/lib/constants.ts#L1-L11)
 
-## Dependency Analysis
-The TypeScript configuration depends on Next.js and related tooling. Tailwind CSS content globs include app, components, and pages directories. ESLint extends Next’s TypeScript preset for consistent linting.
+## NestJS Backend TypeScript Configuration
+The SmartView Server demonstrates enterprise-grade TypeScript configuration for NestJS applications:
+
+### Core TypeScript Settings
+- **Target and module system**: ES2023 target with nodenext module resolution for modern Node.js features.
+- **Decorator support**: Experimental decorators and emitDecoratorMetadata enabled for NestJS dependency injection.
+- **Strict type checking**: Comprehensive strictNullChecks for reliable server-side type safety.
+- **Build optimization**: Separate tsconfig.build.json excludes test files and development dependencies.
+
+### Application Bootstrap and Type Safety
+The main application entry point showcases advanced TypeScript patterns:
+
+- **Dependency injection**: NestFactory.create with proper type inference for AppModule.
+- **Global configuration**: ConfigService integration with type-safe environment variable access.
+- **Validation pipeline**: ValidationPipe with whitelist, transform, and forbidNonWhitelisted options.
+- **Middleware integration**: Global exception filters and response interceptors with proper TypeScript signatures.
+
+### Module System and Type Safety
+The AppModule demonstrates NestJS's modular architecture with comprehensive type safety:
+
+- **Import organization**: Centralized module imports with proper type inference.
+- **Configuration management**: ConfigModule.forRoot with global configuration access.
+- **Feature modularity**: Domain-specific modules (AuthModule, UsersModule, QuestionsModule) with clear boundaries.
 
 ```mermaid
-graph LR
-PKG["package.json"]
-TS["tsconfig.json"]
-ESL["eslint.json"]
-TW["tailwind.config.ts"]
-APP["src/app/*"]
-CMP["src/components/*"]
-LIB["src/lib/*"]
-PKG --> TS
-PKG --> ESL
-TS --> APP
-TS --> CMP
-TS --> LIB
-TW --> APP
-TW --> CMP
-ESL --> TS
+graph TB
+MAIN_TS["src/main.ts<br/>Application Bootstrap"]
+CONFIG_TS["ConfigService<br/>Type-Safe Config Access"]
+VALIDATION_PIPE["ValidationPipe<br/>Type-Safe DTO Validation"]
+FILTERS["HttpExceptionFilter<br/>Global Exception Handling"]
+INTERCEPTORS["ResponseInterceptor<br/>API Response Standardization"]
+MODULE_TS["src/app.module.ts<br/>Module System"]
+MAIN_TS --> CONFIG_TS
+MAIN_TS --> VALIDATION_PIPE
+MAIN_TS --> FILTERS
+MAIN_TS --> INTERCEPTORS
+CONFIG_TS --> MODULE_TS
+VALIDATION_PIPE --> MODULE_TS
+FILTERS --> MODULE_TS
+INTERCEPTORS --> MODULE_TS
 ```
 
 **Diagram sources**
-- [package.json:1-32](file://smartview-portal/package.json#L1-L32)
-- [tsconfig.json:1-27](file://smartview-portal/tsconfig.json#L1-L27)
-- [tailwind.config.ts:1-20](file://smartview-portal/tailwind.config.ts#L1-L20)
-- [.eslintrc.json:1-4](file://smartview-portal/.eslintrc.json#L1-L4)
+- [src/main.ts:1-38](file://smartview-server/src/main.ts#L1-L38)
+- [src/app.module.ts:1-34](file://smartview-server/src/app.module.ts#L1-L34)
 
 **Section sources**
-- [package.json:1-32](file://smartview-portal/package.json#L1-L32)
+- [src/main.ts:1-38](file://smartview-server/src/main.ts#L1-L38)
+- [src/app.module.ts:1-34](file://smartview-server/src/app.module.ts#L1-L34)
+
+**Section sources**
+- [tsconfig.json:1-26](file://smartview-server/tsconfig.json#L1-L26)
+- [tsconfig.build.json:1-5](file://smartview-server/tsconfig.build.json#L1-L5)
+- [nest-cli.json:1-9](file://smartview-server/nest-cli.json#L1-L9)
+- [package.json:22-70](file://smartview-server/package.json#L22-L70)
+
+## Dependency Analysis
+The TypeScript configuration depends on Next.js and NestJS ecosystem tooling. The platform maintains separate configurations for optimal performance in each environment while sharing common TypeScript patterns.
+
+```mermaid
+graph LR
+subgraph "Frontend Dependencies"
+FRONT_PKG["smartview-portal/package.json"]
+FRONT_TS["tsconfig.json"]
+FRONT_ESL["eslint.json"]
+FRONT_TW["tailwind.config.ts"]
+FRONT_APP["src/app/*"]
+FRONT_CMP["src/components/*"]
+FRONT_LIB["src/lib/*"]
+end
+subgraph "Backend Dependencies"
+BACK_PKG["smartview-server/package.json"]
+BACK_TS["tsconfig.json"]
+BACK_BUILD["tsconfig.build.json"]
+BACK_CLI["nest-cli.json"]
+BACK_MAIN["src/main.ts"]
+BACK_MODULE["src/app.module.ts"]
+end
+FRONT_PKG --> FRONT_TS
+FRONT_PKG --> FRONT_ESL
+FRONT_TS --> FRONT_APP
+FRONT_TS --> FRONT_CMP
+FRONT_TS --> FRONT_LIB
+FRONT_TW --> FRONT_APP
+FRONT_TW --> FRONT_CMP
+BACK_PKG --> BACK_TS
+BACK_PKG --> BACK_CLI
+BACK_TS --> BACK_MAIN
+BACK_TS --> BACK_MODULE
+BACK_BUILD --> BACK_MAIN
+BACK_BUILD --> BACK_MODULE
+```
+
+**Diagram sources**
+- [package.json:1-34](file://smartview-portal/package.json#L1-L34)
+- [package.json:1-92](file://smartview-server/package.json#L1-L92)
 - [tsconfig.json:1-27](file://smartview-portal/tsconfig.json#L1-L27)
-- [tailwind.config.ts:1-20](file://smartview-portal/tailwind.config.ts#L1-L20)
-- [.eslintrc.json:1-4](file://smartview-portal/.eslintrc.json#L1-L4)
+- [tsconfig.json:1-26](file://smartview-server/tsconfig.json#L1-L26)
+- [tsconfig.build.json:1-5](file://smartview-server/tsconfig.build.json#L1-L5)
+- [nest-cli.json:1-9](file://smartview-server/nest-cli.json#L1-L9)
+
+**Section sources**
+- [package.json:1-34](file://smartview-portal/package.json#L1-L34)
+- [package.json:1-92](file://smartview-server/package.json#L1-L92)
+- [tsconfig.json:1-27](file://smartview-portal/tsconfig.json#L1-L27)
+- [tsconfig.json:1-26](file://smartview-server/tsconfig.json#L1-L26)
+- [tsconfig.build.json:1-5](file://smartview-server/tsconfig.build.json#L1-L5)
+- [nest-cli.json:1-9](file://smartview-server/nest-cli.json#L1-L9)
 
 ## Performance Considerations
-- Keep strict: true enabled to catch issues early during development.
-- Prefer path aliases (@/*) to reduce deep-relative imports and improve DX.
-- Use incremental builds to speed up repeated compilations.
-- Avoid unnecessary dynamic imports or excessive runtime type assertions to maintain fast type-checking.
+**Frontend Performance**
+- Keep strict: true enabled for early error detection during development.
+- Use path aliases (@/*) to reduce deep-relative imports and improve TypeScript server performance.
+- Enable incremental builds to accelerate repeated compilations in Next.js.
+- Leverage Next.js's built-in type generation to avoid manual compilation overhead.
+
+**Backend Performance**
+- Configure separate build configurations for development and production.
+- Use experimental decorators judiciously as they add runtime overhead.
+- Enable strictNullChecks for comprehensive error detection without performance penalty.
+- Utilize NestJS's dependency injection container for efficient service lifecycle management.
 
 ## Troubleshooting Guide
-Common TypeScript issues and resolutions in this project:
+**Frontend TypeScript Issues**
+- **Missing Next.js types**: Ensure next-env.d.ts is present and included in tsconfig.include.
+- **Path alias resolution**: Verify @/* mapping matches actual src directory structure.
+- **JSX transform conflicts**: Keep jsx: preserve in tsconfig.json for Next.js compatibility.
+- **Tailwind IntelliSense**: Ensure tailwind.config.ts content globs include all directories using Tailwind classes.
 
-- Missing Next.js types
-  - Ensure next-env.d.ts is present and referenced by tsconfig.include.
-  - Verify Next.js version compatibility with TypeScript version.
+**Backend TypeScript Issues**
+- **Decorator compilation**: Ensure experimentalDecorators and emitDecoratorMetadata are enabled.
+- **Module resolution**: Use nodenext module resolution for NestJS compatibility.
+- **Build configuration**: Verify tsconfig.build.json excludes test files and development dependencies.
+- **Dependency injection**: Check that all injected services have proper type annotations.
 
-- Path alias resolution errors
-  - Confirm @/* mapping in tsconfig.json matches actual src directory structure.
-  - Restart TypeScript server or reload editor to pick up path changes.
-
-- JSX transform conflicts
-  - Keep jsx: preserve in tsconfig.json to align with Next’s JSX handling.
-  - Avoid conflicting JSX configs in other files.
-
-- Tailwind IntelliSense and type errors
-  - Ensure tailwind.config.ts content globs include all directories where Tailwind classes are used.
-  - Run Next build to regenerate types if .next/types are missing.
-
-- ESLint and TypeScript mismatch
-  - Extend eslint-config-next in .eslintrc.json to enable TypeScript-aware linting.
-  - Align TypeScript and ESLint versions with Next’s pinned versions.
+**Cross-Platform Issues**
+- **Version compatibility**: Ensure TypeScript versions match Next.js and NestJS requirements.
+- **Environment variables**: Configure ConfigService properly for both development and production.
+- **API communication**: Verify Next.js rewrites are correctly configured for frontend-backend communication.
 
 **Section sources**
 - [next-env.d.ts:1-6](file://smartview-portal/next-env.d.ts#L1-L6)
 - [tsconfig.json:1-27](file://smartview-portal/tsconfig.json#L1-L27)
-- [tailwind.config.ts:1-20](file://smartview-portal/tailwind.config.ts#L1-L20)
-- [.eslintrc.json:1-4](file://smartview-portal/.eslintrc.json#L1-L4)
+- [tsconfig.json:1-26](file://smartview-server/tsconfig.json#L1-L26)
+- [tsconfig.build.json:1-5](file://smartview-server/tsconfig.build.json#L1-L5)
+- [next.config.mjs:1-14](file://smartview-portal/next.config.mjs#L1-L14)
 
 ## Conclusion
-The SmartView Portal’s TypeScript configuration emphasizes strictness, modern module resolution, and seamless Next.js integration. Path aliases and utility-driven composition keep the codebase maintainable and type-safe. By following the guidelines and patterns outlined here, contributors can extend the type system confidently while preserving a smooth development workflow.
+The SmartView Platform demonstrates a sophisticated dual-environment TypeScript architecture that leverages modern Next.js 14+ and NestJS patterns for comprehensive type safety. The frontend emphasizes strict type checking, modern module resolution, and seamless App Router integration, while the backend showcases enterprise-grade TypeScript configuration with dependency injection, decorator support, and modular architecture. Both environments benefit from shared patterns including path aliases, strict mode, and incremental compilation, creating a maintainable and scalable foundation for the SmartView platform.
 
 ## Appendices
 
 ### Maintaining Type Safety Checklist
-- Keep strict: true enabled.
-- Use path aliases (@/*) consistently.
+**Frontend Checklist**
+- Keep strict: true enabled in Next.js configuration.
+- Use path aliases (@/*) consistently across the application.
 - Leverage forwardRef and explicit DOM element targets for component refs.
-- Prefer VariantProps for variant-based components.
-- Use cn for safe class merging and avoid raw string concatenation.
-- Keep tsconfig.include aligned with generated types (.next/types/**).
+- Use VariantProps for variant-based components with class-variance-authority.
+- Implement cn function for safe class merging and avoid raw string concatenation.
+- Keep tsconfig.include aligned with Next.js generated types (.next/types/**).
+
+**Backend Checklist**
+- Enable experimentalDecorators and emitDecoratorMetadata for NestJS features.
+- Use strictNullChecks for comprehensive null safety.
+- Configure separate build configurations for development and production.
+- Leverage NestJS dependency injection with proper type annotations.
+- Use ValidationPipe for automatic DTO validation with type safety.
 
 ### Extending Type Definitions
-- Add ambient declarations in next-env.d.ts only for Next.js-specific types.
-- Define new utility types in lib/types if needed, but prefer built-in utility types from libraries.
-- Extend interfaces incrementally; avoid widening types unintentionally.
+**Frontend Extensions**
+- Add ambient declarations in next-env.d.ts for Next.js-specific types only.
+- Define new utility types in lib/types if needed, preferring built-in utility types.
+- Extend interfaces incrementally to avoid widening types unintentionally.
+
+**Backend Extensions**
+- Create custom decorators with proper type annotations for NestJS features.
+- Define DTO interfaces with class-validator decorators for input validation.
+- Extend NestJS base classes with proper generic type parameters.
 
 ### Example Reference Paths
-- Root layout metadata typing: [src/app/layout.tsx:12-16](file://smartview-portal/src/app/layout.tsx#L12-L16)
+**Frontend Examples**
+- Root layout metadata typing: [src/app/layout.tsx:13-17](file://smartview-portal/src/app/layout.tsx#L13-L17)
 - Button prop interface: [src/components/ui/Button.tsx:33-37](file://smartview-portal/src/components/ui/Button.tsx#L33-L37)
 - Variants and composition: [src/components/ui/Button.tsx:6-31](file://smartview-portal/src/components/ui/Button.tsx#L6-L31)
 - Class merging utility: [src/lib/utils.ts:4-6](file://smartview-portal/src/lib/utils.ts#L4-L6)
-- Navigation constants: [src/lib/constants.ts:4-10](file://smartview-portal/src/lib/constants.ts#L4-L10)
+
+**Backend Examples**
+- Application bootstrap: [src/main.ts:8-36](file://smartview-server/src/main.ts#L8-L36)
+- Module configuration: [src/app.module.ts:15-33](file://smartview-server/src/app.module.ts#L15-L33)
+- Validation pipe setup: [src/main.ts:19-25](file://smartview-server/src/main.ts#L19-L25)
+- Config service integration: [src/main.ts:9-11](file://smartview-server/src/main.ts#L9-L11)

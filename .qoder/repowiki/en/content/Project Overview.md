@@ -17,318 +17,400 @@
 - [HowItWorks.tsx](file://smartview-portal/src/components/home/HowItWorks.tsx)
 - [StatsSection.tsx](file://smartview-portal/src/components/home/StatsSection.tsx)
 - [CTASection.tsx](file://smartview-portal/src/components/home/CTASection.tsx)
+- [api.ts](file://smartview-portal/src/lib/api.ts)
+- [AuthContext.tsx](file://smartview-portal/src/contexts/AuthContext.tsx)
+- [main.ts](file://smartview-server/src/main.ts)
+- [app.module.ts](file://smartview-server/src/app.module.ts)
+- [auth.module.ts](file://smartview-server/src/auth/auth.module.ts)
+- [questions.module.ts](file://smartview-server/src/questions/questions.module.ts)
+- [schema.prisma](file://smartview-server/prisma/schema.prisma)
+- [package.json](file://smartview-server/package.json)
+- [README.md](file://smartview-server/README.md)
 </cite>
+
+## Update Summary
+**Changes Made**
+- Updated architecture overview to reflect microservices structure with Next.js 14 frontend and NestJS backend
+- Added comprehensive backend service documentation covering authentication, user management, and interview workflows
+- Enhanced API documentation with detailed endpoints and data models
+- Updated technology stack to include NestJS, Prisma, and PostgreSQL
+- Added database schema documentation and entity relationships
+- Expanded feature documentation to include AI scoring capabilities and interview management
 
 ## Table of Contents
 1. [Introduction](#introduction)
-2. [Project Structure](#project-structure)
-3. [Core Components](#core-components)
-4. [Architecture Overview](#architecture-overview)
-5. [Detailed Component Analysis](#detailed-component-analysis)
-6. [Dependency Analysis](#dependency-analysis)
-7. [Performance Considerations](#performance-considerations)
-8. [Troubleshooting Guide](#troubleshooting-guide)
-9. [Conclusion](#conclusion)
+2. [Microservices Architecture](#microservices-architecture)
+3. [Frontend Application](#frontend-application)
+4. [Backend Services](#backend-services)
+5. [Database Design](#database-design)
+6. [API Documentation](#api-documentation)
+7. [Core Components](#core-components)
+8. [Technology Stack](#technology-stack)
+9. [Deployment Architecture](#deployment-architecture)
+10. [Development Workflow](#development-workflow)
+11. [Troubleshooting Guide](#troubleshooting-guide)
+12. [Conclusion](#conclusion)
 
 ## Introduction
-SmartView Portal is an AI-powered interview platform designed to modernize technical recruitment. Its purpose is to deliver an efficient, intelligent, and fair assessment experience by combining AI-driven evaluation with human expertise. The platform targets enterprises seeking scalable solutions for online assessments, AI scoring, intelligent matching, and question bank management.
+SmartView Portal is a modern AI-powered interview platform that has undergone a complete architectural transformation from a monolithic structure to a sophisticated microservices architecture. The platform combines Next.js 14+ frontend with a NestJS backend to deliver an enterprise-grade solution for technical recruitment assessment.
 
-Key objectives:
-- Provide a seamless landing page experience that communicates value and drives conversions
-- Deliver a responsive navigation system with clear entry points for product discovery and engagement
-- Establish a reusable component library for consistent UI and UX across pages
-- Demonstrate AI capabilities through compelling visuals and interactive elements
+The platform serves as a comprehensive interview management system that integrates AI-driven evaluation with human expertise. It provides automated coding assessments, intelligent scoring, video interviewing capabilities, and streamlined candidate evaluation processes for organizations of all sizes.
 
-Target audience:
-- Hiring teams and HR professionals evaluating technical candidates
-- Engineering managers and interviewers relying on objective insights
-- Decision makers seeking measurable improvements in accuracy, efficiency, and candidate satisfaction
+**Key Objectives:**
+- Deliver a scalable microservices architecture for enterprise deployment
+- Provide seamless AI-assisted technical interview experiences
+- Enable real-time collaboration between candidates, interviewers, and hiring teams
+- Support comprehensive assessment workflows from initial screening to final decision-making
+- Ensure security, scalability, and performance for high-volume interview operations
 
-## Project Structure
-The project follows Next.js App Router conventions with a clear separation of concerns:
-- Application shell and global styles live under src/app
-- Shared UI components are organized under src/components
-- Utility modules and constants reside under src/lib
-- Styling is configured via Tailwind CSS with a content-based scanning strategy
+**Target Audience:**
+- Enterprise HR teams and recruitment specialists
+- Engineering managers and technical interviewers
+- Hiring managers seeking data-driven candidate evaluation
+- Technical recruiters implementing standardized assessment processes
+
+## Microservices Architecture
+The platform has evolved from a traditional monolithic application to a modern microservices architecture, separating concerns into distinct frontend and backend services.
 
 ```mermaid
 graph TB
-subgraph "App Shell"
-LAYOUT["src/app/layout.tsx"]
-HOME["src/app/page.tsx"]
+subgraph "Client Layer"
+PORTAL["SmartView Portal<br/>Next.js 14 Frontend"]
+BROWSER["Web Browser"]
 end
-subgraph "Shared Layout"
-HEADER["src/components/layout/Header.tsx"]
-FOOTER["src/components/layout/Footer.tsx"]
+subgraph "API Gateway"
+GATEWAY["HTTP Client<br/>Axios"]
 end
-subgraph "Home Sections"
-HERO["src/components/home/HeroSection.tsx"]
-FEATURES["src/components/home/FeaturesOverview.tsx"]
-HOW["src/components/home/HowItWorks.tsx"]
-STATS["src/components/home/StatsSection.tsx"]
-CTA["src/components/home/CTASection.tsx"]
+subgraph "Backend Services"
+AUTH["Auth Service<br/>Authentication & Authorization"]
+USERS["Users Service<br/>User Management"]
+QUESTIONS["Questions Service<br/>Assessment Questions"]
+EXAMS["Exams Service<br/>Coding Assessments"]
+INTERVIEWS["Interviews Service<br/>Video Interviews"]
+APPLICATIONS["Applications Service<br/>Candidate Tracking"]
+SCORING["Scoring Service<br/>AI Evaluation Engine"]
+SANDBOX["Sandbox Service<br/>Code Execution"]
 end
-subgraph "UI Library"
-BUTTON["src/components/ui/Button.tsx"]
+subgraph "Infrastructure"
+DB["PostgreSQL Database"]
+REDIS["Redis Cache"]
+MINIO["Object Storage"]
 end
-subgraph "Utilities"
-CONST["src/lib/constants.ts"]
-UTILS["src/lib/utils.ts"]
-end
-subgraph "Styling"
-TWCFG["tailwind.config.ts"]
-end
-LAYOUT --> HEADER
-LAYOUT --> HOME
-LAYOUT --> FOOTER
-HOME --> HERO
-HOME --> FEATURES
-HOME --> HOW
-HOME --> STATS
-HOME --> CTA
-HEADER --> CONST
-HEADER --> BUTTON
-FOOTER --> CONST
-HERO --> BUTTON
-FEATURES --> BUTTON
-CTA --> BUTTON
-BUTTON --> UTILS
-UTILS --> TWCFG
+BROWSER --> PORTAL
+PORTAL --> GATEWAY
+GATEWAY --> AUTH
+GATEWAY --> USERS
+GATEWAY --> QUESTIONS
+GATEWAY --> EXAMS
+GATEWAY --> INTERVIEWS
+GATEWAY --> APPLICATIONS
+GATEWAY --> SCORING
+GATEWAY --> SANDBOX
+AUTH --> DB
+USERS --> DB
+QUESTIONS --> DB
+EXAMS --> DB
+INTERVIEWS --> DB
+APPLICATIONS --> DB
+SCORING --> DB
+SANDBOX --> DB
 ```
 
 **Diagram sources**
-- [layout.tsx:1-33](file://smartview-portal/src/app/layout.tsx#L1-L33)
-- [page.tsx:1-18](file://smartview-portal/src/app/page.tsx#L1-L18)
-- [Header.tsx:1-131](file://smartview-portal/src/components/layout/Header.tsx#L1-L131)
-- [Footer.tsx:1-127](file://smartview-portal/src/components/layout/Footer.tsx#L1-L127)
-- [HeroSection.tsx:1-125](file://smartview-portal/src/components/home/HeroSection.tsx#L1-L125)
-- [FeaturesOverview.tsx:1-74](file://smartview-portal/src/components/home/FeaturesOverview.tsx#L1-L74)
-- [HowItWorks.tsx:1-93](file://smartview-portal/src/components/home/HowItWorks.tsx#L1-L93)
-- [StatsSection.tsx:1-40](file://smartview-portal/src/components/home/StatsSection.tsx#L1-L40)
-- [CTASection.tsx:1-54](file://smartview-portal/src/components/home/CTASection.tsx#L1-L54)
-- [Button.tsx:1-54](file://smartview-portal/src/components/ui/Button.tsx#L1-L54)
-- [constants.ts:1-11](file://smartview-portal/src/lib/constants.ts#L1-L11)
-- [utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
-- [tailwind.config.ts:1-20](file://smartview-portal/tailwind.config.ts#L1-L20)
+- [main.ts:8-36](file://smartview-server/src/main.ts#L8-L36)
+- [app.module.ts:15-33](file://smartview-server/src/app.module.ts#L15-L33)
 
 **Section sources**
-- [layout.tsx:1-33](file://smartview-portal/src/app/layout.tsx#L1-L33)
-- [page.tsx:1-18](file://smartview-portal/src/app/page.tsx#L1-L18)
-- [constants.ts:1-11](file://smartview-portal/src/lib/constants.ts#L1-L11)
-- [utils.ts:1-7](file://smartview-portal/src/lib/utils.ts#L1-L7)
-- [tailwind.config.ts:1-20](file://smartview-portal/tailwind.config.ts#L1-L20)
+- [main.ts:8-36](file://smartview-server/src/main.ts#L8-L36)
+- [app.module.ts:15-33](file://smartview-server/src/app.module.ts#L15-L33)
+
+## Frontend Application
+The frontend application is built with Next.js 14 using the App Router architecture, providing a modern React-based user interface with comprehensive interview management capabilities.
+
+### Core Features
+- **Authentication & Authorization**: Role-based access control with JWT tokens
+- **Candidate Dashboard**: Personalized interface for coding assessments and progress tracking
+- **Interviewer Dashboard**: Tools for scheduling, conducting, and evaluating interviews
+- **Admin Interface**: Comprehensive management of questions, users, and system configuration
+- **Real-time Collaboration**: Live updates and notifications for interview coordination
+
+### Technology Stack
+- **Framework**: Next.js 14 with App Router
+- **Runtime**: React 18 with concurrent features
+- **Styling**: Tailwind CSS with custom configuration
+- **State Management**: Context API with custom hooks
+- **API Communication**: Axios with automatic token refresh
+- **Code Editor**: Monaco Editor integration for coding assessments
+
+**Section sources**
+- [package.json:11-22](file://smartview-portal/package.json#L11-L22)
+- [layout.tsx:13-35](file://smartview-portal/src/app/layout.tsx#L13-L35)
+- [AuthContext.tsx:52-206](file://smartview-portal/src/contexts/AuthContext.tsx#L52-L206)
+
+## Backend Services
+The backend is implemented as a NestJS microservices architecture with clear separation of concerns across specialized modules.
+
+### Authentication Service
+Handles user authentication, authorization, and session management with JWT-based security.
+
+### User Management Service
+Manages user profiles, roles, and permissions across different organizational hierarchies.
+
+### Question Management Service
+Provides CRUD operations for assessment questions with support for multiple programming languages and difficulty levels.
+
+### Exam Management Service
+Coordinates coding assessments, manages submission tracking, and integrates with the sandbox service for code execution.
+
+### Interview Management Service
+Handles video interview scheduling, coordination, and scoring integration with AI evaluation systems.
+
+### Application Management Service
+Tracks candidate applications through the entire hiring pipeline from initial screening to final decisions.
+
+### Scoring Service
+Integrates AI-powered evaluation with human scoring to provide comprehensive candidate assessment.
+
+### Sandbox Service
+Provides secure code execution environments for real-time coding assessments.
+
+**Section sources**
+- [auth.module.ts:10-29](file://smartview-server/src/auth/auth.module.ts#L10-L29)
+- [questions.module.ts:1-13](file://smartview-server/src/questions/questions.module.ts#L1-L13)
+- [app.module.ts:15-33](file://smartview-server/src/app.module.ts#L15-L33)
+
+## Database Design
+The platform uses PostgreSQL as the primary database with Prisma ORM for type-safe database operations and relationship management.
+
+### Core Entities
+- **Users**: Candidate, interviewer, HR, and admin user accounts
+- **Companies**: Organizational hierarchy and team structures
+- **Jobs**: Position listings with requirements and application tracking
+- **Questions**: Assessment items with multiple programming language support
+- **Applications**: Candidate job applications through the hiring pipeline
+- **Exams**: Coding assessments with submission tracking
+- **Interviews**: Video interview scheduling and evaluation
+- **Scores**: AI and human evaluation results
+
+### Entity Relationships
+```mermaid
+erDiagram
+USER ||--o{ APPLICATION : applies_to
+JOB ||--o{ APPLICATION : has_many
+APPLICATION ||--o{ EXAM : contains
+APPLICATION ||--o{ INTERVIEW : schedules
+EXAM ||--o{ EXAM_SUBMISSION : generates
+EXAM_SUBMISSION ||--|| AI_SCORE : evaluated_by
+INTERVIEW ||--o{ INTERVIEWER_SCORE : receives
+USER ||--o{ INTERVIEWER_SCORE : evaluates
+USER ||--o{ NOTIFICATION : receives
+COMPANY ||--o{ USER : employs
+COMPANY ||--o{ JOB : posts
+APPLICATION ||--|| FINAL_SCORE : produces
+```
+
+**Diagram sources**
+- [schema.prisma:77-334](file://smartview-server/prisma/schema.prisma#L77-L334)
+
+**Section sources**
+- [schema.prisma:12-74](file://smartview-server/prisma/schema.prisma#L12-L74)
+- [schema.prisma:77-334](file://smartview-server/prisma/schema.prisma#L77-L334)
+
+## API Documentation
+The backend exposes a comprehensive RESTful API with clear endpoint organization and standardized response formats.
+
+### Authentication Endpoints
+- `POST /api/auth/login` - User authentication
+- `POST /api/auth/register` - User registration
+- `POST /api/auth/refresh` - Token refresh
+- `GET /api/auth/me` - Current user profile
+
+### User Management Endpoints
+- `GET /api/users` - List all users
+- `GET /api/users/:id` - Get user by ID
+- `PUT /api/users/profile` - Update user profile
+
+### Question Management Endpoints
+- `GET /api/questions` - List questions with filtering
+- `GET /api/questions/:id` - Get question by ID
+- `POST /api/questions` - Create new question
+- `PUT /api/questions/:id` - Update question
+- `DELETE /api/questions/:id` - Delete question
+
+### Exam Management Endpoints
+- `GET /api/exams/:id` - Get exam details
+- `POST /api/exams/:id/start` - Start exam
+- `POST /api/exams/:id/submit` - Submit exam
+- `PUT /api/exams/:id/submissions/:questionId` - Save submission
+- `POST /api/exams/:id/submissions/:questionId/run` - Run code
+
+### Interview Management Endpoints
+- `GET /api/interviews` - List interviews
+- `GET /api/interviews/:id` - Get interview details
+- `POST /api/interviews/:id/score` - Submit interviewer score
+- `GET /api/interviews/:id/scores` - Get all scores
+
+### Application Management Endpoints
+- `GET /api/applications/:id` - Get application details
+- `GET /api/applications/:id/report` - Get AI evaluation report
+- `POST /api/applications/:id/finalize` - Finalize application
+- `PUT /api/applications/:id/decision` - Update hiring decision
+
+### Scoring Endpoints
+- `GET /api/scoring/:submissionId` - Get AI evaluation
+- `GET /api/scoring/exam/:examId` - Get exam scoring results
+
+**Section sources**
+- [api.ts:131-409](file://smartview-portal/src/lib/api.ts#L131-L409)
 
 ## Core Components
-This section documents the foundational building blocks that define the platform’s look, feel, and behavior.
+The platform's architecture is built around several core components that work together to provide a seamless interview experience.
 
-- Global layout and metadata
-  - Defines site metadata and wraps pages with shared header and footer
-  - Ensures consistent typography and spacing across the application
+### Authentication & Authorization
+The system implements role-based access control with JWT tokens for secure API communication. The authentication system supports multiple user roles including candidates, interviewers, HR personnel, and administrators.
 
-- Navigation system
-  - Fixed header with logo, desktop links, and mobile menu
-  - Path-aware active states and responsive behavior
-  - Ghost and primary call-to-action buttons for login and registration
+### Real-time Communication
+WebSocket connections enable real-time updates for interview scheduling, status changes, and collaborative features. The system maintains persistent connections for critical interview operations.
 
-- Component library
-  - Button component with variant and size variants, supporting slot composition
-  - Utility class merging for robust CSS composition
+### Code Execution Environment
+The sandbox service provides isolated, secure execution environments for candidate code submissions. It supports multiple programming languages with resource limits and security restrictions.
 
-- Home page sections
-  - Hero section with gradient background, product mockup, and AI score indicator
-  - Features overview highlighting AI hybrid scoring, online coding environment, engineering mindset assessment, and intelligent matching
-  - How It Works process steps with icons and numbered badges
-  - Statistics section showcasing accuracy, efficiency, satisfaction, and concurrent capacity
-  - Call-to-action section with trust indicators and prominent signup flow
+### AI Evaluation Engine
+Advanced AI algorithms analyze candidate code submissions, providing objective scoring and detailed feedback. The system evaluates coding ability, engineering mindset, problem-solving approaches, and code quality.
 
-Practical examples:
-- Landing page conversion: The hero section’s gradient background, mockup, and “AI Score 92/100” indicator communicate real-time AI evaluation to capture attention and drive trial sign-ups
-- Product education: The “How It Works” section visually breaks down the four-step process to reduce friction and clarify value
-- Social proof: The statistics section reinforces claims with quantifiable metrics to build trust
+### Document Management
+Secure file storage for resumes, code samples, and interview recordings. The system integrates with object storage solutions for scalable media handling.
 
 **Section sources**
-- [layout.tsx:12-32](file://smartview-portal/src/app/layout.tsx#L12-L32)
-- [Header.tsx:11-131](file://smartview-portal/src/components/layout/Header.tsx#L11-L131)
-- [Button.tsx:6-54](file://smartview-portal/src/components/ui/Button.tsx#L6-L54)
-- [HeroSection.tsx:4-125](file://smartview-portal/src/components/home/HeroSection.tsx#L4-L125)
-- [FeaturesOverview.tsx:26-74](file://smartview-portal/src/components/home/FeaturesOverview.tsx#L26-L74)
-- [HowItWorks.tsx:30-93](file://smartview-portal/src/components/home/HowItWorks.tsx#L30-L93)
-- [StatsSection.tsx:20-40](file://smartview-portal/src/components/home/StatsSection.tsx#L20-L40)
-- [CTASection.tsx:5-54](file://smartview-portal/src/components/home/CTASection.tsx#L5-L54)
+- [AuthContext.tsx:98-176](file://smartview-portal/src/contexts/AuthContext.tsx#L98-L176)
+- [api.ts:402-407](file://smartview-portal/src/lib/api.ts#L402-L407)
 
-## Architecture Overview
-The platform leverages Next.js App Router to structure pages and layouts, with a modular component hierarchy. Styling is centralized via Tailwind CSS, and a shared Button component ensures consistent interaction patterns.
+## Technology Stack
+The platform leverages cutting-edge technologies to ensure scalability, performance, and maintainability.
 
-```mermaid
-graph TB
-CLIENT["Browser"]
-NEXT["Next.js App Router"]
-LAYOUT["Root Layout<br/>metadata, header, footer"]
-HOME["Home Page<br/>sections composition"]
-LIB["Lib Utilities<br/>constants, cn()"]
-UI["UI Library<br/>Button"]
-STYLES["Tailwind Config<br/>content scanning"]
-CLIENT --> NEXT
-NEXT --> LAYOUT
-LAYOUT --> HOME
-HOME --> UI
-LAYOUT --> UI
-LAYOUT --> LIB
-HOME --> LIB
-UI --> STYLES
-LIB --> STYLES
-```
+### Frontend Technologies
+- **Next.js 14**: Modern React framework with App Router and server-side rendering
+- **React 18**: Latest React features including concurrent rendering and automatic batching
+- **TypeScript**: Type-safe development for better code reliability
+- **Tailwind CSS**: Utility-first styling with custom design system
+- **Monaco Editor**: Full-featured code editor for coding assessments
+- **Axios**: HTTP client with automatic token refresh and error handling
 
-**Diagram sources**
-- [layout.tsx:12-32](file://smartview-portal/src/app/layout.tsx#L12-L32)
-- [page.tsx:7-17](file://smartview-portal/src/app/page.tsx#L7-L17)
-- [constants.ts:1-11](file://smartview-portal/src/lib/constants.ts#L1-L11)
-- [utils.ts:4-6](file://smartview-portal/src/lib/utils.ts#L4-L6)
-- [Button.tsx:39-50](file://smartview-portal/src/components/ui/Button.tsx#L39-L50)
-- [tailwind.config.ts:4-8](file://smartview-portal/tailwind.config.ts#L4-L8)
+### Backend Technologies
+- **NestJS**: Enterprise Node.js framework with dependency injection
+- **TypeScript**: Type-safe backend development
+- **Prisma**: Next-generation ORM with type-safe database queries
+- **PostgreSQL**: Reliable relational database with advanced features
+- **Redis**: High-performance caching and session storage
+- **Passport.js**: Authentication middleware and strategies
 
-## Detailed Component Analysis
-
-### Navigation System
-The header integrates branding, navigation, and actions while adapting to scroll and viewport changes. It dynamically highlights active links and provides a mobile-first menu experience.
-
-```mermaid
-sequenceDiagram
-participant U as "User"
-participant H as "Header"
-participant N as "Nav Links"
-participant P as "Page"
-U->>H : "Load page"
-H->>H : "Detect scroll position"
-H->>N : "Render desktop links"
-H->>N : "Apply active state based on pathname"
-U->>H : "Click mobile menu"
-H->>H : "Toggle mobile menu visibility"
-U->>N : "Select link"
-N->>P : "Navigate to route"
-P-->>U : "Render updated page"
-```
-
-**Diagram sources**
-- [Header.tsx:11-131](file://smartview-portal/src/components/layout/Header.tsx#L11-L131)
-- [constants.ts:4-10](file://smartview-portal/src/lib/constants.ts#L4-L10)
+### Infrastructure Technologies
+- **Docker**: Containerization for consistent deployments
+- **Nginx**: Reverse proxy and load balancing
+- **PM2**: Process management for production deployments
+- **Jest**: Testing framework with comprehensive coverage
+- **ESLint/Prettier**: Code quality and formatting standards
 
 **Section sources**
-- [Header.tsx:11-131](file://smartview-portal/src/components/layout/Header.tsx#L11-L131)
-- [constants.ts:4-10](file://smartview-portal/src/lib/constants.ts#L4-L10)
+- [package.json:11-32](file://smartview-portal/package.json#L11-L32)
+- [package.json:22-40](file://smartview-server/package.json#L22-L40)
 
-### Home Page Composition
-The home page composes multiple focused sections to present value, process, and outcomes.
+## Deployment Architecture
+The platform supports multiple deployment strategies from development to enterprise production environments.
 
-```mermaid
-flowchart TD
-Start(["Home Page Render"]) --> Hero["HeroSection<br/>gradient + mockup + AI score"]
-Hero --> Features["FeaturesOverview<br/>key benefits grid"]
-Features --> How["HowItWorks<br/>step-by-step process"]
-How --> Stats["StatsSection<br/>metrics display"]
-Stats --> CTA["CTASection<br/>signup + trust badges"]
-CTA --> End(["Conversion Goal"])
-```
+### Development Environment
+- Local development with hot reloading
+- Docker containers for consistent local setups
+- Separate frontend and backend development servers
+- Mock services for external dependencies
 
-**Diagram sources**
-- [page.tsx:7-17](file://smartview-portal/src/app/page.tsx#L7-L17)
-- [HeroSection.tsx:4-125](file://smartview-portal/src/components/home/HeroSection.tsx#L4-L125)
-- [FeaturesOverview.tsx:26-74](file://smartview-portal/src/components/home/FeaturesOverview.tsx#L26-L74)
-- [HowItWorks.tsx:30-93](file://smartview-portal/src/components/home/HowItWorks.tsx#L30-L93)
-- [StatsSection.tsx:20-40](file://smartview-portal/src/components/home/StatsSection.tsx#L20-L40)
-- [CTASection.tsx:5-54](file://smartview-portal/src/components/home/CTASection.tsx#L5-L54)
+### Staging Environment
+- Preview deployments for feature validation
+- Automated testing pipelines
+- Performance monitoring and logging
+- Security scanning and vulnerability assessment
 
-**Section sources**
-- [page.tsx:7-17](file://smartview-portal/src/app/page.tsx#L7-L17)
-- [HeroSection.tsx:4-125](file://smartview-portal/src/components/home/HeroSection.tsx#L4-L125)
-- [FeaturesOverview.tsx:26-74](file://smartview-portal/src/components/home/FeaturesOverview.tsx#L26-L74)
-- [HowItWorks.tsx:30-93](file://smartview-portal/src/components/home/HowItWorks.tsx#L30-L93)
-- [StatsSection.tsx:20-40](file://smartview-portal/src/components/home/StatsSection.tsx#L20-L40)
-- [CTASection.tsx:5-54](file://smartview-portal/src/components/home/CTASection.tsx#L5-L54)
+### Production Environment
+- Kubernetes orchestration for container management
+- Load balancers for traffic distribution
+- Database clustering for high availability
+- CDN integration for static asset delivery
+- Automated backup and disaster recovery
 
-### Component Library: Button
-The Button component encapsulates variant and size logic with slot composition for semantic flexibility.
+### CI/CD Pipeline
+- Automated testing on every commit
+- Security scanning and code quality checks
+- Automated deployment to staging environments
+- Blue-green deployment strategy for zero-downtime releases
 
-```mermaid
-classDiagram
-class Button {
-+variant : "primary" | "secondary" | "outline" | "ghost"
-+size : "sm" | "md" | "lg"
-+asChild : boolean
-+className : string
-+props : ButtonHTMLAttributes
-}
-class Utils {
-+cn(...inputs) : string
-}
-Button --> Utils : "uses"
-```
+## Development Workflow
+The development process follows modern agile practices with emphasis on code quality and maintainability.
 
-**Diagram sources**
-- [Button.tsx:33-50](file://smartview-portal/src/components/ui/Button.tsx#L33-L50)
-- [utils.ts:4-6](file://smartview-portal/src/lib/utils.ts#L4-L6)
+### Code Organization
+- Feature-based module organization
+- Clear separation of concerns between frontend and backend
+- Shared interfaces and DTOs between services
+- Comprehensive type definitions for type safety
 
-**Section sources**
-- [Button.tsx:6-54](file://smartview-portal/src/components/ui/Button.tsx#L6-L54)
-- [utils.ts:4-6](file://smartview-portal/src/lib/utils.ts#L4-L6)
+### Testing Strategy
+- Unit tests for individual components and services
+- Integration tests for service interactions
+- End-to-end tests for critical user flows
+- Performance testing for scalability validation
 
-## Dependency Analysis
-Technology stack and module relationships:
-- Next.js 14 powers routing, SSR, and static generation
-- React 18 provides concurrent features and hooks
-- TypeScript enforces type safety across components and utilities
-- Tailwind CSS enables utility-first styling with content scanning
-- Radix UI Slot and class variance authority support flexible component composition and variants
-- clsx and tailwind-merge streamline conditional class handling
+### Code Quality
+- ESLint for JavaScript/TypeScript linting
+- Prettier for code formatting consistency
+- Git hooks for pre-commit validation
+- Pull request reviews with automated checks
 
-```mermaid
-graph LR
-PKG["package.json"]
-NEXT["next"]
-REACT["react + react-dom"]
-TYPESCRIPT["typescript"]
-TAILWIND["tailwindcss"]
-RADIX["@radix-ui/react-slot"]
-CVA["class-variance-authority"]
-CLSX["clsx"]
-TM["tailwind-merge"]
-PKG --> NEXT
-PKG --> REACT
-PKG --> TYPESCRIPT
-PKG --> TAILWIND
-PKG --> RADIX
-PKG --> CVA
-PKG --> CLSX
-PKG --> TM
-```
-
-**Diagram sources**
-- [package.json:11-30](file://smartview-portal/package.json#L11-L30)
-
-**Section sources**
-- [package.json:11-30](file://smartview-portal/package.json#L11-L30)
-
-## Performance Considerations
-- Prefer static generation and server-side rendering via Next.js App Router to minimize client-side work
-- Leverage Tailwind’s content scanning to purge unused styles and reduce bundle size
-- Use the shared Button component to avoid duplication and maintain consistent interaction patterns
-- Keep component props minimal and encapsulated to reduce re-renders
-- Optimize images and assets through Next.js image optimization features
+### Documentation
+- Inline code documentation with JSDoc
+- API documentation with Swagger/OpenAPI
+- Architecture decision records (ADRs)
+- Developer onboarding guides
 
 ## Troubleshooting Guide
-Common areas to inspect:
-- Layout metadata and global styles: Verify metadata and font loading in the root layout
-- Navigation responsiveness: Confirm mobile menu toggle and active link states
-- Styling coverage: Ensure Tailwind content globs include all component paths
-- Component variants: Validate variant and size combinations in the Button component
-- Utility class merging: Confirm cn() usage prevents conflicting classes
+Common issues and their solutions across the microservices architecture.
+
+### Frontend Issues
+- **Authentication failures**: Check JWT token storage and refresh mechanisms
+- **API connectivity**: Verify CORS configuration and base URL settings
+- **Component rendering**: Review Next.js App Router configuration and dynamic imports
+- **Styling issues**: Confirm Tailwind CSS configuration and content paths
+
+### Backend Issues
+- **Database connection**: Verify PostgreSQL connection strings and Prisma configuration
+- **Service communication**: Check NestJS module imports and dependency injection
+- **Authentication errors**: Validate JWT secrets and passport strategies
+- **Performance bottlenecks**: Monitor Redis cache and database query performance
+
+### Microservices Issues
+- **Service discovery**: Verify service registration and health checks
+- **Message queuing**: Check queue configurations and worker processes
+- **Load balancing**: Review load balancer configuration and service scaling
+- **Circuit breakers**: Monitor service resilience and fallback mechanisms
+
+### Database Issues
+- **Migration failures**: Check Prisma migration status and database permissions
+- **Connection pooling**: Verify pool size and connection timeouts
+- **Query performance**: Analyze slow query logs and index usage
+- **Data integrity**: Validate foreign key constraints and referential integrity
 
 **Section sources**
-- [layout.tsx:12-32](file://smartview-portal/src/app/layout.tsx#L12-L32)
-- [Header.tsx:11-131](file://smartview-portal/src/components/layout/Header.tsx#L11-L131)
-- [tailwind.config.ts:4-8](file://smartview-portal/tailwind.config.ts#L4-L8)
-- [Button.tsx:6-54](file://smartview-portal/src/components/ui/Button.tsx#L6-L54)
-- [utils.ts:4-6](file://smartview-portal/src/lib/utils.ts#L4-L6)
+- [main.ts:12-36](file://smartview-server/src/main.ts#L12-L36)
+- [auth.module.ts:13-22](file://smartview-server/src/auth/auth.module.ts#L13-L22)
 
 ## Conclusion
-SmartView Portal presents a cohesive, scalable foundation for an AI-powered interview platform. Its Next.js 14 + React 18 + TypeScript + Tailwind stack, combined with a modular component library and a clear navigation system, enables rapid iteration and consistent user experiences. The home page composition effectively communicates value, educates users on the process, and drives conversions through social proof and clear CTAs.
+SmartView Portal represents a comprehensive evolution from a traditional monolithic application to a modern microservices architecture. The platform successfully combines Next.js 14 frontend excellence with NestJS backend scalability to deliver a robust AI-powered interview solution.
+
+The microservices architecture provides clear separation of concerns, enabling independent development, testing, and deployment of specialized services. The comprehensive API documentation, type-safe development practices, and modern infrastructure ensure maintainability and scalability for enterprise deployments.
+
+Key strengths of the current architecture include:
+- **Scalable Microservices**: Independent service development and deployment
+- **AI Integration**: Advanced evaluation capabilities with real-time feedback
+- **Comprehensive Assessment**: Multi-modal evaluation including coding, video interviews, and AI scoring
+- **Enterprise Ready**: Secure authentication, role-based access control, and audit trails
+- **Developer Experience**: Modern tooling, comprehensive testing, and clear documentation
+
+The platform is well-positioned to support growing organizational needs while maintaining high performance, security, and developer productivity standards.
