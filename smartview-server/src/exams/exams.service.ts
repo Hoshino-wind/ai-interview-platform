@@ -9,6 +9,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { SandboxService, RunCodeResult } from '../sandbox/sandbox.service';
 import { ScoringService } from '../scoring/scoring.service';
+import { QuestionGeneratorService, GeneratedQuestion } from './question-generator.service';
 import {
   Exam,
   ExamStatus,
@@ -39,6 +40,7 @@ export class ExamsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly sandboxService: SandboxService,
+    private readonly questionGeneratorService: QuestionGeneratorService,
     @Inject(forwardRef(() => ScoringService))
     private readonly scoringService: ScoringService,
   ) {}
@@ -83,6 +85,97 @@ export class ExamsService {
     ]);
 
     return exam;
+  }
+
+  /**
+   * Generate AI-personalized exam for an application
+   */
+  async generateExam(applicationId: string): Promise<{
+    exam: Exam;
+    questions: Question[];
+  }> {
+    // Verify application exists
+    const application = await this.prisma.application.findUnique({
+      where: { id: applicationId },
+    });
+
+    if (!application) {
+      throw new NotFoundException(
+        `Application with ID "${applicationId}" not found`,
+      );
+    }
+
+    // Generate questions using AI
+    const generatedQuestions = await this.questionGeneratorService.generateQuestions(applicationId);
+
+    // Create Question records and Exam in a transaction
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Create Question records for each generated question
+      const createdQuestions: Question[] = [];
+      
+      for (const gq of generatedQuestions) {
+        const question = await tx.question.create({
+          data: {
+            type: this.questionGeneratorService.determineQuestionType(gq.title, gq.description),
+            difficulty: this.questionGeneratorService.mapDifficulty(gq.difficulty),
+            title: gq.title,
+            description: gq.description,
+            starterCode: gq.starterCode ? { code: gq.starterCode } : Prisma.JsonNull,
+            testCases: gq.testCases ? { cases: gq.testCases } : {},
+            hiddenTestCases: Prisma.JsonNull,
+            evaluationRubric: { criteria: gq.evaluationCriteria },
+            timeLimit: gq.estimatedTime * 60, // Convert minutes to seconds
+            tags: gq.relatedSkills,
+            languageSupport: ['javascript', 'typescript', 'python'],
+          },
+        });
+        createdQuestions.push(question);
+      }
+
+      // Calculate total time limit
+      const totalTimeMinutes = generatedQuestions.reduce(
+        (sum, q) => sum + q.estimatedTime,
+        0,
+      );
+
+      // Create Exam
+      const exam = await tx.exam.create({
+        data: {
+          applicationId,
+          questionIds: createdQuestions.map((q) => q.id),
+          timeLimit: totalTimeMinutes * 60, // Convert minutes to seconds
+          status: ExamStatus.NOT_STARTED,
+        },
+      });
+
+      // Update application status
+      await tx.application.update({
+        where: { id: applicationId },
+        data: { status: ApplicationStatus.EXAM_SENT },
+      });
+
+      return { exam, questions: createdQuestions };
+    });
+
+    return result;
+  }
+
+  /**
+   * Preview generated questions without creating an exam
+   */
+  async previewGeneratedQuestions(applicationId: string): Promise<GeneratedQuestion[]> {
+    // Verify application exists
+    const application = await this.prisma.application.findUnique({
+      where: { id: applicationId },
+    });
+
+    if (!application) {
+      throw new NotFoundException(
+        `Application with ID "${applicationId}" not found`,
+      );
+    }
+
+    return this.questionGeneratorService.generateQuestions(applicationId);
   }
 
   async findOne(

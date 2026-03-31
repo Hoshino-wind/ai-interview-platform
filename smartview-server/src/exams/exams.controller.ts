@@ -13,6 +13,7 @@ import {
 import { ExamsService } from './exams.service';
 import { SandboxService } from '../sandbox/sandbox.service';
 import { CreateExamDto } from './dto/create-exam.dto';
+import { GenerateExamDto } from './dto/generate-exam.dto';
 import { SubmitCodeDto } from './dto/submit-code.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -33,12 +34,36 @@ export class ExamsController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles(UserRole.ADMIN, UserRole.HR)
+  @Roles(UserRole.ADMIN, UserRole.HR, UserRole.INTERVIEWER)
   async create(@Body() createExamDto: CreateExamDto) {
     const exam = await this.examsService.create(createExamDto);
     return {
       success: true,
       data: exam,
+    };
+  }
+
+  @Post('generate')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.HR, UserRole.INTERVIEWER)
+  async generateExam(@Body() generateExamDto: GenerateExamDto) {
+    const result = await this.examsService.generateExam(generateExamDto.applicationId);
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @Post('generate/preview')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.HR, UserRole.INTERVIEWER)
+  async previewGeneratedQuestions(@Body() generateExamDto: GenerateExamDto) {
+    const questions = await this.examsService.previewGeneratedQuestions(
+      generateExamDto.applicationId,
+    );
+    return {
+      success: true,
+      data: questions,
     };
   }
 

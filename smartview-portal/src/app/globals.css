@@ -1,30 +1,230 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 html {
   scroll-behavior: smooth;
-}
-
-body {
-  color: var(--foreground);
-  background: var(--background);
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+@layer base {
+  .theme {
+    --font-heading: var(--font-mono);
+    --font-sans: var(--font-sans);
+  }
+
+  /* ===== Light Mode — Clean, bright with accent pops ===== */
+  :root {
+    --background: #F8F9FA;
+    --foreground: #0C0C0E;
+    --card: #FFFFFF;
+    --card-foreground: #0C0C0E;
+    --popover: #FFFFFF;
+    --popover-foreground: #0C0C0E;
+    --primary: #00C98D;
+    --primary-foreground: #0C0C0E;
+    --secondary: #F0F1F3;
+    --secondary-foreground: #1A1A1D;
+    --muted: #ECEDF0;
+    --muted-foreground: #6B6F76;
+    --accent: #00C98D;
+    --accent-foreground: #0C0C0E;
+    --destructive: #EF4444;
+    --border: #E2E4E8;
+    --input: #E2E4E8;
+    --ring: #00C98D;
+    --radius: 0.625rem;
+
+    /* Syntax highlight accents */
+    --syntax-keyword: #8B5CF6;
+    --syntax-string: #22C55E;
+    --syntax-number: #F97316;
+    --syntax-function: #3B82F6;
+    --syntax-comment: #9CA3AF;
+
+    /* Glow effect */
+    --glow: rgba(0, 201, 141, 0.2);
+    --glow-strong: rgba(0, 201, 141, 0.35);
+
+    /* Chart colors */
+    --chart-1: #00C98D;
+    --chart-2: #8B5CF6;
+    --chart-3: #3B82F6;
+    --chart-4: #F97316;
+    --chart-5: #EF4444;
+
+    /* Sidebar */
+    --sidebar: #FFFFFF;
+    --sidebar-foreground: #0C0C0E;
+    --sidebar-primary: #00C98D;
+    --sidebar-primary-foreground: #0C0C0E;
+    --sidebar-accent: #F0F1F3;
+    --sidebar-accent-foreground: #1A1A1D;
+    --sidebar-border: #E2E4E8;
+    --sidebar-ring: #00C98D;
+  }
+
+  /* ===== Dark Mode — Code-Noir: deep, terminal-inspired ===== */
+  .dark {
+    --background: #0C0C0E;
+    --foreground: #E4E4E7;
+    --card: #161618;
+    --card-foreground: #E4E4E7;
+    --popover: #161618;
+    --popover-foreground: #E4E4E7;
+    --primary: #00E5A0;
+    --primary-foreground: #0C0C0E;
+    --secondary: #1E1E21;
+    --secondary-foreground: #E4E4E7;
+    --muted: #1E1E21;
+    --muted-foreground: #71717A;
+    --accent: #00E5A0;
+    --accent-foreground: #0C0C0E;
+    --destructive: #F87171;
+    --border: rgba(255, 255, 255, 0.06);
+    --input: rgba(255, 255, 255, 0.1);
+    --ring: #00E5A0;
+
+    /* Syntax highlight accents — code editor palette */
+    --syntax-keyword: #C792EA;
+    --syntax-string: #C3E88D;
+    --syntax-number: #F78C6C;
+    --syntax-function: #82AAFF;
+    --syntax-comment: #546E7A;
+
+    /* Glow effect */
+    --glow: rgba(0, 229, 160, 0.15);
+    --glow-strong: rgba(0, 229, 160, 0.3);
+
+    /* Chart colors */
+    --chart-1: #00E5A0;
+    --chart-2: #C792EA;
+    --chart-3: #82AAFF;
+    --chart-4: #F78C6C;
+    --chart-5: #F87171;
+
+    /* Sidebar */
+    --sidebar: #111113;
+    --sidebar-foreground: #E4E4E7;
+    --sidebar-primary: #00E5A0;
+    --sidebar-primary-foreground: #0C0C0E;
+    --sidebar-accent: #1E1E21;
+    --sidebar-accent-foreground: #E4E4E7;
+    --sidebar-border: rgba(255, 255, 255, 0.06);
+    --sidebar-ring: #00E5A0;
+  }
+
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* ===== Background textures & effects ===== */
+@layer components {
+  /* Subtle dot grid background — like an editor grid */
+  .bg-grid {
+    background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+    background-size: 24px 24px;
+  }
+
+  /* Noise/grain overlay */
+  .bg-noise::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  }
+
+  /* Glow card — glass morphism + glow border */
+  .card-glow {
+    background: var(--card);
+    border: 1px solid var(--border);
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .card-glow:hover {
+    border-color: var(--primary);
+    box-shadow: 0 0 20px var(--glow), inset 0 0 20px var(--glow);
+  }
+
+  /* Gradient divider — fades from transparent */
+  .divider-gradient {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--border) 20%,
+      var(--primary) 50%,
+      var(--border) 80%,
+      transparent
+    );
+  }
+
+  /* Accent glow button */
+  .btn-glow {
+    box-shadow: 0 0 0 rgba(0, 229, 160, 0);
+    transition: box-shadow 0.3s ease;
+  }
+  .btn-glow:hover {
+    box-shadow: 0 0 20px var(--glow-strong), 0 0 40px var(--glow);
+  }
+
+  /* Mouse-follow spotlight (pair with JS for --mouse-x/--mouse-y) */
+  .spotlight {
+    position: relative;
+    overflow: hidden;
+  }
+  .spotlight::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      var(--glow),
+      transparent 40%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .spotlight:hover::after {
+    opacity: 1;
+  }
+}
+
+/* ===== Animation keyframes ===== */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 5px var(--glow); }
+  50% { box-shadow: 0 0 20px var(--glow-strong), 0 0 40px var(--glow); }
+}
+@keyframes typing-cursor {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+@keyframes count-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }

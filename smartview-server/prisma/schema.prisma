@@ -135,7 +135,7 @@ model Job {
 
 model Resume {
   id          String   @id @default(uuid())
-  candidateId String
+  candidateId String   @unique
   fileUrl     String?
   parsedData  Json?
   skills      String[] @default([])

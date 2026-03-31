@@ -20,6 +20,8 @@ const exams_module_1 = require("./exams/exams.module");
 const scoring_module_1 = require("./scoring/scoring.module");
 const interviews_module_1 = require("./interviews/interviews.module");
 const applications_module_1 = require("./applications/applications.module");
+const llm_module_1 = require("./llm/llm.module");
+const resumes_module_1 = require("./resumes/resumes.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -30,6 +32,7 @@ exports.AppModule = AppModule = __decorate([
                 isGlobal: true,
             }),
             prisma_module_1.PrismaModule,
+            llm_module_1.LlmModule,
             auth_module_1.AuthModule,
             users_module_1.UsersModule,
             questions_module_1.QuestionsModule,
@@ -38,6 +41,7 @@ exports.AppModule = AppModule = __decorate([
             scoring_module_1.ScoringModule,
             interviews_module_1.InterviewsModule,
             applications_module_1.ApplicationsModule,
+            resumes_module_1.ResumesModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [app_service_1.AppService],

@@ -11,6 +11,8 @@ import { ExamsModule } from './exams/exams.module';
 import { ScoringModule } from './scoring/scoring.module';
 import { InterviewsModule } from './interviews/interviews.module';
 import { ApplicationsModule } from './applications/applications.module';
+import { LlmModule } from './llm/llm.module';
+import { ResumesModule } from './resumes/resumes.module';
 
 @Module({
   imports: [
@@ -18,6 +20,7 @@ import { ApplicationsModule } from './applications/applications.module';
       isGlobal: true,
     }),
     PrismaModule,
+    LlmModule,
     AuthModule,
     UsersModule,
     QuestionsModule,
@@ -26,6 +29,7 @@ import { ApplicationsModule } from './applications/applications.module';
     ScoringModule,
     InterviewsModule,
     ApplicationsModule,
+    ResumesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

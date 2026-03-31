@@ -66,13 +66,20 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Auth endpoints that should not trigger token refresh on 401
+const AUTH_ENDPOINTS = ['/auth/login', '/auth/register', '/auth/refresh'];
+
 // Response interceptor - handle 401 and token refresh
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiResponse>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
     
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Check if this is an auth endpoint that should not trigger token refresh
+    const requestUrl = originalRequest?.url || '';
+    const isAuthEndpoint = AUTH_ENDPOINTS.some(endpoint => requestUrl.startsWith(endpoint));
+    
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -244,12 +251,19 @@ export interface Exam {
   createdAt: string;
 }
 
+export interface CodingEvent {
+  type: 'keystroke' | 'paste' | 'tab_away' | 'tab_return' | 'run_code' | 'snapshot' | 'undo' | 'redo';
+  timestamp: number;
+  data: Record<string, unknown>;
+}
+
 export interface Submission {
   id: string;
   examId: string;
   questionId: string;
   language: Language;
   code: string;
+  codingEvents?: CodingEvent[];
   createdAt: string;
   updatedAt: string;
 }
@@ -279,10 +293,15 @@ export const examsApi = {
     api.post<ApiResponse<Exam>>(`/exams/${id}/start`),
   submitExam: (id: string) =>
     api.post<ApiResponse<void>>(`/exams/${id}/submit`),
-  saveSubmission: (examId: string, questionId: string, data: { language: Language; code: string }) =>
+  saveSubmission: (examId: string, questionId: string, data: { language: Language; code: string; codingEvents?: CodingEvent[] }) =>
     api.put<ApiResponse<Submission>>(`/exams/${examId}/submissions/${questionId}`, data),
   runCode: (examId: string, questionId: string, data: { language: Language; code: string }) =>
     api.post<ApiResponse<RunCodeResult>>(`/exams/${examId}/submissions/${questionId}/run`, data),
+  // AI generation endpoints
+  generatePreview: (applicationId: string) =>
+    api.post<ApiResponse<{ questions: AIGeneratedQuestion[] }>>('/exams/generate/preview', { applicationId }),
+  generateExam: (applicationId: string) =>
+    api.post<ApiResponse<Exam>>('/exams/generate', { applicationId }),
 };
 
 // Interview types
@@ -386,10 +405,40 @@ export const interviewsApi = {
     api.get<ApiResponse<InterviewerScore[]>>(`/interviews/${id}/scores`),
 };
 
+// Application with exam info
+export interface ApplicationWithExam extends Application {
+  resume?: {
+    id: string;
+    fileUrl: string | null;
+    parsedData: ParsedData | null;
+  } | null;
+  exam?: {
+    id: string;
+    status: ExamStatus;
+    title: string;
+    duration: number;
+    createdAt: string;
+  } | null;
+  scoringStatus?: 'NOT_STARTED' | 'PENDING' | 'COMPLETED';
+}
+
+// AI Generated Question Preview
+export interface AIGeneratedQuestion {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  estimatedTime: number;
+  relatedSkills: string[];
+  scoringCriteria: string;
+}
+
 // Applications API
 export const applicationsApi = {
+  getAll: (params?: { page?: number; limit?: number; status?: string }) =>
+    api.get<ApiResponse<{ items: ApplicationWithExam[]; total: number }>>('/applications', { params }),
   getById: (id: string) =>
-    api.get<ApiResponse<Application>>(`/applications/${id}`),
+    api.get<ApiResponse<ApplicationWithExam>>(`/applications/${id}`),
   getReport: (id: string) =>
     api.get<ApiResponse<AIScoreReport>>(`/applications/${id}/report`),
   finalize: (id: string) =>
@@ -404,6 +453,94 @@ export const scoringApi = {
     api.get<ApiResponse<AIScoreReport>>(`/scoring/${submissionId}`),
   getByExam: (examId: string) =>
     api.get<ApiResponse<{ submissions: SubmissionWithCode[]; reports: Record<string, AIScoreReport> }>>(`/scoring/exam/${examId}`),
+};
+
+// Resume types
+export interface ExperienceItem {
+  company: string;
+  role: string;
+  years: number;
+  techStack: string[];
+  description: string;
+}
+
+export interface EducationItem {
+  school: string;
+  degree: string;
+  major: string;
+  year: number;
+}
+
+export interface ProjectItem {
+  name: string;
+  description: string;
+  techStack: string[];
+}
+
+export interface ParsedData {
+  skills: string[];
+  experience?: ExperienceItem[];
+  education?: EducationItem[];
+  projects?: ProjectItem[];
+  yearsOfExperience: number;
+  seniorityLevel: 'junior' | 'mid' | 'mid-senior' | 'senior' | 'expert';
+}
+
+export interface Resume {
+  id: string;
+  candidateId: string;
+  fileUrl: string | null;
+  parsedData: ParsedData | null;
+  skills: string[];
+  experience: ExperienceItem[] | null;
+  education: EducationItem[] | null;
+  visibility: string;
+  createdAt: string;
+  updatedAt: string;
+  candidate?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+// Resumes API
+export const resumesApi = {
+  upload: (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return api.post<ApiResponse<{ id: string; fileUrl: string; createdAt: string }>>('/resumes/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  parse: () => api.post<ApiResponse<ParsedData>>('/resumes/parse'),
+  getMyResume: () => api.get<ApiResponse<Resume | null>>('/resumes/me'),
+  updateParsedData: (data: { parsedData: ParsedData }) =>
+    api.put<ApiResponse<Resume>>('/resumes/me', data),
+};
+
+// LLM Provider types
+export interface LlmProvider {
+  id: string;
+  name: string;
+  model: string;
+  isDefault: boolean;
+  enabled: boolean;
+}
+
+export interface TestProviderResult {
+  success: boolean;
+  response?: string;
+  error?: string;
+}
+
+// LLM API
+export const llmApi = {
+  getProviders: () => api.get<ApiResponse<LlmProvider[]>>('/llm/providers'),
+  setDefaultProvider: (providerId: string) =>
+    api.put<ApiResponse<{ success: boolean; defaultProvider: string }>>('/llm/providers/default', { providerId }),
+  testProvider: (providerId: string) =>
+    api.post<ApiResponse<TestProviderResult>>('/llm/providers/test', { providerId }),
 };
 
 export default api;

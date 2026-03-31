@@ -6,6 +6,7 @@ const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const http_exception_filter_1 = require("./common/filters/http-exception.filter");
 const response_interceptor_1 = require("./common/interceptors/response.interceptor");
+const path_1 = require("path");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     const configService = app.get(config_1.ConfigService);
@@ -21,6 +22,9 @@ async function bootstrap() {
         forbidNonWhitelisted: true,
     }));
     app.setGlobalPrefix('api');
+    app.useStaticAssets((0, path_1.join)(__dirname, '..', 'uploads'), {
+        prefix: '/uploads/',
+    });
     app.useGlobalFilters(new http_exception_filter_1.HttpExceptionFilter());
     app.useGlobalInterceptors(new response_interceptor_1.ResponseInterceptor());
     const port = configService.get('PORT') ?? 3001;

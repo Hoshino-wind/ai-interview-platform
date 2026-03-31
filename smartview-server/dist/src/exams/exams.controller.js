@@ -17,6 +17,7 @@ const common_1 = require("@nestjs/common");
 const exams_service_1 = require("./exams.service");
 const sandbox_service_1 = require("../sandbox/sandbox.service");
 const create_exam_dto_1 = require("./dto/create-exam.dto");
+const generate_exam_dto_1 = require("./dto/generate-exam.dto");
 const submit_code_dto_1 = require("./dto/submit-code.dto");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
 const roles_guard_1 = require("../auth/guards/roles.guard");
@@ -35,6 +36,20 @@ let ExamsController = class ExamsController {
         return {
             success: true,
             data: exam,
+        };
+    }
+    async generateExam(generateExamDto) {
+        const result = await this.examsService.generateExam(generateExamDto.applicationId);
+        return {
+            success: true,
+            data: result,
+        };
+    }
+    async previewGeneratedQuestions(generateExamDto) {
+        const questions = await this.examsService.previewGeneratedQuestions(generateExamDto.applicationId);
+        return {
+            success: true,
+            data: questions,
         };
     }
     async findOne(id, user) {
@@ -85,12 +100,30 @@ exports.ExamsController = ExamsController;
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(client_1.UserRole.ADMIN, client_1.UserRole.HR),
+    (0, roles_decorator_1.Roles)(client_1.UserRole.ADMIN, client_1.UserRole.HR, client_1.UserRole.INTERVIEWER),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [create_exam_dto_1.CreateExamDto]),
     __metadata("design:returntype", Promise)
 ], ExamsController.prototype, "create", null);
+__decorate([
+    (0, common_1.Post)('generate'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.UserRole.ADMIN, client_1.UserRole.HR, client_1.UserRole.INTERVIEWER),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [generate_exam_dto_1.GenerateExamDto]),
+    __metadata("design:returntype", Promise)
+], ExamsController.prototype, "generateExam", null);
+__decorate([
+    (0, common_1.Post)('generate/preview'),
+    (0, common_1.UseGuards)(roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.UserRole.ADMIN, client_1.UserRole.HR, client_1.UserRole.INTERVIEWER),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [generate_exam_dto_1.GenerateExamDto]),
+    __metadata("design:returntype", Promise)
+], ExamsController.prototype, "previewGeneratedQuestions", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id', common_1.ParseUUIDPipe)),

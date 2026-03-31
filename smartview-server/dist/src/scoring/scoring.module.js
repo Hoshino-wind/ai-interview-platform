@@ -10,17 +10,17 @@ exports.ScoringModule = void 0;
 const common_1 = require("@nestjs/common");
 const scoring_service_1 = require("./scoring.service");
 const scoring_controller_1 = require("./scoring.controller");
-const llm_service_1 = require("./llm/llm.service");
 const mock_scoring_service_1 = require("./llm/mock-scoring.service");
 const prisma_module_1 = require("../prisma/prisma.module");
+const llm_module_1 = require("../llm/llm.module");
 let ScoringModule = class ScoringModule {
 };
 exports.ScoringModule = ScoringModule;
 exports.ScoringModule = ScoringModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule],
+        imports: [prisma_module_1.PrismaModule, llm_module_1.LlmModule],
         controllers: [scoring_controller_1.ScoringController],
-        providers: [scoring_service_1.ScoringService, llm_service_1.LLMService, mock_scoring_service_1.MockScoringService],
+        providers: [scoring_service_1.ScoringService, mock_scoring_service_1.MockScoringService],
         exports: [scoring_service_1.ScoringService],
     })
 ], ScoringModule);

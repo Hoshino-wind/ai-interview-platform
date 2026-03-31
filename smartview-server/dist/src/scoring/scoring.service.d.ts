@@ -1,5 +1,5 @@
 import { PrismaService } from '../prisma/prisma.service';
-import { LLMService } from './llm/llm.service';
+import { LLMService } from '../llm/llm.service';
 import { MockScoringService } from './llm/mock-scoring.service';
 import { AIScore } from '@prisma/client';
 export declare class ScoringService {
@@ -14,12 +14,13 @@ export declare class ScoringService {
     getExamScores(examId: string): Promise<AIScore[]>;
     retryScore(submissionId: string): Promise<AIScore>;
     private calculateScores;
-    private calculateCorrectness;
+    private evaluateDeliveryQuality;
     private evaluateCodeQuality;
-    private evaluateEdgeCaseHandling;
-    private evaluateComplexity;
-    private evaluateEngineering;
     private evaluateProblemSolving;
+    private evaluateToolUsage;
+    private evaluateEngineering;
+    private evaluateTechMatch;
+    private analyzeCodingEvents;
     private generateReport;
     private calculateBehaviorSummary;
     private calculateTimeDistribution;

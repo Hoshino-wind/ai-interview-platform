@@ -1,31 +1,44 @@
+"use client";
+
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
+        default:
+          "bg-primary text-primary-foreground hover:opacity-90",
         primary:
-          "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 shadow-sm",
+          "bg-primary text-primary-foreground shadow-glow hover:shadow-glow-strong",
+        glow:
+          "bg-primary text-primary-foreground shadow-glow hover:shadow-glow-strong",
         secondary:
-          "bg-gray-100 text-gray-900 hover:bg-gray-200 active:bg-gray-300",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         outline:
-          "border-2 border-blue-600 bg-transparent text-blue-600 hover:bg-blue-50 active:bg-blue-100",
+          "border border-border bg-transparent hover:bg-muted hover:text-foreground",
         ghost:
-          "bg-transparent text-gray-700 hover:bg-gray-100 active:bg-gray-200",
+          "hover:bg-muted hover:text-foreground",
+        destructive:
+          "bg-destructive/10 text-destructive hover:bg-destructive/20",
+        link:
+          "text-primary underline-offset-4 hover:underline",
       },
       size: {
-        sm: "h-9 px-3 text-xs",
-        md: "h-10 px-4 py-2",
-        lg: "h-12 px-6 text-base",
+        default: "h-9 px-4 py-2",
+        xs: "h-6 px-2 text-xs rounded-md",
+        sm: "h-8 px-3 text-sm rounded-md",
+        md: "h-10 px-4",
+        lg: "h-11 px-6 text-base",
+        icon: "h-9 w-9",
       },
     },
     defaultVariants: {
-      variant: "primary",
-      size: "md",
+      variant: "default",
+      size: "default",
     },
   }
 );

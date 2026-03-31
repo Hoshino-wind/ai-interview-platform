@@ -1,3 +1,63 @@
+export interface DeliveryQualityDimension {
+    score: number;
+    maxScore: number;
+    testPassRate: string;
+    edgeCases: number;
+    highlights?: string[];
+    issues?: string[];
+    analysis?: string;
+}
+export interface CodeQualityDimension {
+    score: number;
+    maxScore: number;
+    readability: number;
+    naming: number;
+    structure: number;
+    highlights?: string[];
+    issues?: string[];
+    analysis?: string;
+}
+export interface ProblemSolvingDimension {
+    score: number;
+    maxScore: number;
+    thinkingClarity: number;
+    debugStrategy: number;
+    iterativeImprovement: number;
+    analysis?: string;
+}
+export interface ToolUsageDimension {
+    score: number;
+    maxScore: number;
+    pasteEvents: number;
+    tabSwitches: number;
+    avgTabAwayDuration: string;
+    codingPattern: 'think_first' | 'iterative' | 'research_driven' | 'paste_heavy';
+    toolEfficiency: 'high' | 'medium' | 'low';
+    assessment: string;
+}
+export interface EngineeringDimension {
+    score: number;
+    maxScore: number;
+    errorHandling: number;
+    performance: number;
+    modularity: number;
+    analysis?: string;
+}
+export interface TechMatchDimension {
+    score: number;
+    maxScore: number;
+    matchedSkills: string[];
+    missingSkills: string[];
+    analysis?: string;
+}
+export interface ScoringBreakdown {
+    deliveryQuality: DeliveryQualityDimension;
+    codeQuality: CodeQualityDimension;
+    problemSolving: ProblemSolvingDimension;
+    toolUsage: ToolUsageDimension;
+    engineering: EngineeringDimension;
+    techMatch: TechMatchDimension;
+}
 export interface ScoringDimension {
     score: number;
     maxScore: number;
@@ -13,14 +73,6 @@ export interface ScoringDimension {
     problemDecomposition?: number;
     debugging?: number;
     multiApproach?: number;
-}
-export interface ScoringBreakdown {
-    correctness: ScoringDimension;
-    codeQuality: ScoringDimension;
-    edgeCaseHandling: ScoringDimension;
-    complexity: ScoringDimension;
-    engineering: ScoringDimension;
-    problemSolving: ScoringDimension;
 }
 export interface CodeAnnotation {
     line: number;
@@ -52,6 +104,17 @@ export interface LLMEvaluationResponse {
     problemDecomposition?: number;
     debugging?: number;
     multiApproach?: number;
+    readability?: number;
+    naming?: number;
+    structure?: number;
+    thinkingClarity?: number;
+    debugStrategy?: number;
+    iterativeImprovement?: number;
+    errorHandling?: number;
+    performance?: number;
+    matchedSkills?: string[];
+    missingSkills?: string[];
+    edgeCases?: number;
 }
 export interface LLMReportResponse {
     suggestedQuestions: string[];

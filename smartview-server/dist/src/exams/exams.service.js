@@ -17,14 +17,17 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const sandbox_service_1 = require("../sandbox/sandbox.service");
 const scoring_service_1 = require("../scoring/scoring.service");
+const question_generator_service_1 = require("./question-generator.service");
 const client_1 = require("@prisma/client");
 let ExamsService = class ExamsService {
     prisma;
     sandboxService;
+    questionGeneratorService;
     scoringService;
-    constructor(prisma, sandboxService, scoringService) {
+    constructor(prisma, sandboxService, questionGeneratorService, scoringService) {
         this.prisma = prisma;
         this.sandboxService = sandboxService;
+        this.questionGeneratorService = questionGeneratorService;
         this.scoringService = scoringService;
     }
     async create(createExamDto) {
@@ -56,6 +59,60 @@ let ExamsService = class ExamsService {
             }),
         ]);
         return exam;
+    }
+    async generateExam(applicationId) {
+        const application = await this.prisma.application.findUnique({
+            where: { id: applicationId },
+        });
+        if (!application) {
+            throw new common_1.NotFoundException(`Application with ID "${applicationId}" not found`);
+        }
+        const generatedQuestions = await this.questionGeneratorService.generateQuestions(applicationId);
+        const result = await this.prisma.$transaction(async (tx) => {
+            const createdQuestions = [];
+            for (const gq of generatedQuestions) {
+                const question = await tx.question.create({
+                    data: {
+                        type: this.questionGeneratorService.determineQuestionType(gq.title, gq.description),
+                        difficulty: this.questionGeneratorService.mapDifficulty(gq.difficulty),
+                        title: gq.title,
+                        description: gq.description,
+                        starterCode: gq.starterCode ? { code: gq.starterCode } : client_1.Prisma.JsonNull,
+                        testCases: gq.testCases ? { cases: gq.testCases } : {},
+                        hiddenTestCases: client_1.Prisma.JsonNull,
+                        evaluationRubric: { criteria: gq.evaluationCriteria },
+                        timeLimit: gq.estimatedTime * 60,
+                        tags: gq.relatedSkills,
+                        languageSupport: ['javascript', 'typescript', 'python'],
+                    },
+                });
+                createdQuestions.push(question);
+            }
+            const totalTimeMinutes = generatedQuestions.reduce((sum, q) => sum + q.estimatedTime, 0);
+            const exam = await tx.exam.create({
+                data: {
+                    applicationId,
+                    questionIds: createdQuestions.map((q) => q.id),
+                    timeLimit: totalTimeMinutes * 60,
+                    status: client_1.ExamStatus.NOT_STARTED,
+                },
+            });
+            await tx.application.update({
+                where: { id: applicationId },
+                data: { status: client_1.ApplicationStatus.EXAM_SENT },
+            });
+            return { exam, questions: createdQuestions };
+        });
+        return result;
+    }
+    async previewGeneratedQuestions(applicationId) {
+        const application = await this.prisma.application.findUnique({
+            where: { id: applicationId },
+        });
+        if (!application) {
+            throw new common_1.NotFoundException(`Application with ID "${applicationId}" not found`);
+        }
+        return this.questionGeneratorService.generateQuestions(applicationId);
     }
     async findOne(id, user) {
         const exam = await this.prisma.exam.findUnique({
@@ -350,9 +407,10 @@ let ExamsService = class ExamsService {
 exports.ExamsService = ExamsService;
 exports.ExamsService = ExamsService = __decorate([
     (0, common_1.Injectable)(),
-    __param(2, (0, common_1.Inject)((0, common_1.forwardRef)(() => scoring_service_1.ScoringService))),
+    __param(3, (0, common_1.Inject)((0, common_1.forwardRef)(() => scoring_service_1.ScoringService))),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         sandbox_service_1.SandboxService,
+        question_generator_service_1.QuestionGeneratorService,
         scoring_service_1.ScoringService])
 ], ExamsService);
 //# sourceMappingURL=exams.service.js.map

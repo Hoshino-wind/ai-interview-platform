@@ -10,6 +10,7 @@ exports.ExamsModule = void 0;
 const common_1 = require("@nestjs/common");
 const exams_service_1 = require("./exams.service");
 const exams_controller_1 = require("./exams.controller");
+const question_generator_service_1 = require("./question-generator.service");
 const sandbox_module_1 = require("../sandbox/sandbox.module");
 const scoring_module_1 = require("../scoring/scoring.module");
 let ExamsModule = class ExamsModule {
@@ -19,7 +20,7 @@ exports.ExamsModule = ExamsModule = __decorate([
     (0, common_1.Module)({
         imports: [sandbox_module_1.SandboxModule, (0, common_1.forwardRef)(() => scoring_module_1.ScoringModule)],
         controllers: [exams_controller_1.ExamsController],
-        providers: [exams_service_1.ExamsService],
+        providers: [exams_service_1.ExamsService, question_generator_service_1.QuestionGeneratorService],
         exports: [exams_service_1.ExamsService],
     })
 ], ExamsModule);

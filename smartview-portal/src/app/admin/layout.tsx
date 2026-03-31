@@ -1,128 +1,88 @@
 "use client";
 
-import { useAuth } from "@/contexts/AuthContext";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  LayoutDashboard,
-  BookOpen,
-  Users,
-  BarChart3,
-  Settings,
-  LogOut,
-} from "lucide-react";
+import { Terminal, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { cn } from "@/lib/utils";
 
-const sidebarItems = [
-  {
-    label: "题库管理",
-    href: "/admin/questions",
-    icon: BookOpen,
-  },
-  {
-    label: "用户管理",
-    href: "/admin/users",
-    icon: Users,
-  },
-  {
-    label: "数据看板",
-    href: "/admin/dashboard",
-    icon: BarChart3,
-  },
-  {
-    label: "系统设置",
-    href: "/admin/settings",
-    icon: Settings,
-  },
+const tabs = [
+  { name: "考试管理", href: "/admin/questions" },
+  { name: "AI 出题", href: "/admin/exams" },
+  { name: "数据看板", href: "/admin/dashboard" },
+  { name: "系统设置", href: "/admin/settings" },
 ];
 
-function AdminLayoutContent({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { user, logout } = useAuth();
+function AdminLayoutContent({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
+
+  const isActiveTab = (href: string) => {
+    if (href === "/admin/questions") return pathname === "/admin/questions" || pathname === "/admin";
+    return pathname.startsWith(href);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 fixed h-full">
-        <div className="p-6">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <LayoutDashboard className="w-5 h-5 text-white" />
+    <div className="min-h-screen bg-background">
+      {/* Top bar */}
+      <header className="bg-card border-b border-border">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-center justify-between h-16">
+            <Link href="/admin/questions" className="flex items-center gap-2.5">
+              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                <Terminal className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <span className="text-lg font-semibold font-mono text-foreground">智面 SmartView</span>
+            </Link>
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
+              <span className="text-sm text-muted-foreground font-mono">{user?.name}</span>
+              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                <span className="text-sm font-mono font-medium text-primary-foreground">
+                  {user?.name?.charAt(0)?.toUpperCase() || "A"}
+                </span>
+              </div>
+              <button onClick={logout} className="text-muted-foreground hover:text-foreground transition-colors" title="退出登录">
+                <LogOut className="w-5 h-5" />
+              </button>
             </div>
-            <span className="text-lg font-bold text-gray-900">管理后台</span>
-          </Link>
-        </div>
-
-        <nav className="px-4 py-4">
-          <ul className="space-y-1">
-            {sidebarItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                      isActive
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                    )}
-                  >
-                    <Icon className="w-5 h-5" />
-                    <span className="font-medium">{item.label}</span>
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3 px-4 py-3">
-            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-gray-600">
-                {user?.name?.[0] || "A"}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.name || "管理员"}
-              </p>
-              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-            </div>
-            <button
-              onClick={logout}
-              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-              title="退出登录"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
           </div>
         </div>
-      </aside>
+      </header>
 
-      {/* Main Content */}
-      <main className="flex-1 ml-64">
-        <div className="p-8">{children}</div>
-      </main>
+      {/* Tab nav */}
+      <nav className="bg-card border-b border-border">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex space-x-8">
+            {tabs.map((tab) => (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={cn(
+                  "py-3 px-1 text-sm font-medium border-b-2 transition-colors font-mono",
+                  isActiveTab(tab.href)
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                )}
+              >
+                {tab.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </nav>
+
+      <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
     </div>
   );
 }
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <ProtectedRoute requiredRoles={['ADMIN', 'HR']}>
+    <ProtectedRoute requiredRoles={["ADMIN", "HR"]}>
       <AdminLayoutContent>{children}</AdminLayoutContent>
     </ProtectedRoute>
   );

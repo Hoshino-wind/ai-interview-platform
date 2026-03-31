@@ -1,6 +1,7 @@
 import { ExamsService } from './exams.service';
 import { SandboxService } from '../sandbox/sandbox.service';
 import { CreateExamDto } from './dto/create-exam.dto';
+import { GenerateExamDto } from './dto/generate-exam.dto';
 import { SubmitCodeDto } from './dto/submit-code.dto';
 import { type CurrentUserData } from '../common/decorators/current-user.decorator';
 export declare class ExamsController {
@@ -19,6 +20,17 @@ export declare class ExamsController {
             startedAt: Date | null;
             submittedAt: Date | null;
         };
+    }>;
+    generateExam(generateExamDto: GenerateExamDto): Promise<{
+        success: boolean;
+        data: {
+            exam: import("@prisma/client").Exam;
+            questions: import("@prisma/client").Question[];
+        };
+    }>;
+    previewGeneratedQuestions(generateExamDto: GenerateExamDto): Promise<{
+        success: boolean;
+        data: import("./question-generator.service").GeneratedQuestion[];
     }>;
     findOne(id: string, user: CurrentUserData): Promise<{
         success: boolean;

@@ -17,10 +17,10 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  SCHEDULED: { label: "已安排", color: "bg-blue-100 text-blue-700" },
-  IN_PROGRESS: { label: "进行中", color: "bg-yellow-100 text-yellow-700" },
-  COMPLETED: { label: "已完成", color: "bg-green-100 text-green-700" },
-  CANCELLED: { label: "已取消", color: "bg-gray-100 text-gray-700" },
+  SCHEDULED: { label: "已安排", color: "bg-syntax-function/10 text-syntax-function" },
+  IN_PROGRESS: { label: "进行中", color: "bg-syntax-number/10 text-syntax-number" },
+  COMPLETED: { label: "已完成", color: "bg-syntax-string/10 text-syntax-string" },
+  CANCELLED: { label: "已取消", color: "bg-muted text-muted-foreground" },
 };
 
 const TYPE_MAP: Record<string, { label: string; icon: typeof Video }> = {
@@ -74,66 +74,66 @@ function InterviewerDashboardContent() {
     <div>
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">面试官工作台</h1>
-        <p className="text-gray-600">
+        <h1 className="text-2xl font-bold font-mono text-foreground mb-2">面试官工作台</h1>
+        <p className="text-muted-foreground">
           欢迎回来，{user?.name || "面试官"}！以下是您的待处理面试列表。
         </p>
       </div>
 
       {/* Interviews Table */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">待处理面试</h2>
+      <div className="bg-card rounded-xl shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-border">
+          <h2 className="text-lg font-semibold font-mono text-foreground">待处理面试</h2>
         </div>
 
         {loading ? (
           <div className="p-12 text-center">
-            <div className="inline-block w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-            <p className="mt-2 text-gray-600">加载中...</p>
+            <div className="inline-block w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+            <p className="mt-2 text-muted-foreground">加载中...</p>
           </div>
         ) : error ? (
           <div className="p-12 text-center">
-            <p className="text-red-600">{error}</p>
+            <p className="text-destructive">{error}</p>
             <Button variant="outline" className="mt-4" onClick={fetchInterviews}>
               重试
             </Button>
           </div>
         ) : interviews.length === 0 ? (
           <div className="p-12 text-center">
-            <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500">暂无待处理的面试</p>
+            <Calendar className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+            <p className="text-muted-foreground">暂无待处理的面试</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50">
+                <thead className="bg-secondary/50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium font-mono text-muted-foreground uppercase tracking-wider">
                       候选人姓名
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium font-mono text-muted-foreground uppercase tracking-wider">
                       应聘岗位
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium font-mono text-muted-foreground uppercase tracking-wider">
                       面试类型
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium font-mono text-muted-foreground uppercase tracking-wider">
                       安排时间
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium font-mono text-muted-foreground uppercase tracking-wider">
                       状态
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium font-mono text-muted-foreground uppercase tracking-wider">
                       操作
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-border">
                   {interviews.map((interview) => {
                     const status = STATUS_MAP[interview.status] || {
                       label: interview.status,
-                      color: "bg-gray-100 text-gray-700",
+                      color: "bg-muted text-muted-foreground",
                     };
                     const type = TYPE_MAP[interview.type] || {
                       label: interview.type,
@@ -142,28 +142,28 @@ function InterviewerDashboardContent() {
                     const TypeIcon = type.icon;
 
                     return (
-                      <tr key={interview.id} className="hover:bg-gray-50">
+                      <tr key={interview.id} className="hover:bg-secondary/50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-foreground">
                             {interview.application?.candidate?.name || "未知候选人"}
                           </div>
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-muted-foreground">
                             {interview.application?.candidate?.email || ""}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
+                          <div className="text-sm text-foreground">
                             {interview.application?.job?.title || "未知岗位"}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-2 text-sm text-gray-900">
-                            <TypeIcon className="w-4 h-4 text-gray-400" />
+                          <div className="flex items-center gap-2 text-sm text-foreground">
+                            <TypeIcon className="w-4 h-4 text-muted-foreground" />
                             {type.label}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">
+                          <div className="text-sm text-foreground">
                             {formatDate(interview.scheduledAt)}
                           </div>
                         </td>
@@ -194,8 +194,8 @@ function InterviewerDashboardContent() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                <div className="text-sm text-gray-500">
+              <div className="px-6 py-4 border-t border-border flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
                   共 {total} 条记录，第 {page} / {totalPages} 页
                 </div>
                 <div className="flex items-center gap-2">
