@@ -1,0 +1,19 @@
+{
+  "name": "@ai-interview/sandbox-runner",
+  "version": "1.0.0",
+  "description": "Sandbox runner stub for AI Interview Platform",
+  "scripts": {
+    "build": "pnpm --filter @ai-interview/shared-types build && tsc",
+    "dev": "ts-node src/main.ts",
+    "start": "node dist/main.js",
+    "typecheck": "pnpm --filter @ai-interview/shared-types build && tsc --noEmit"
+  },
+  "dependencies": {
+    "@ai-interview/shared-types": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
